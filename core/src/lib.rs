@@ -1,4 +1,4 @@
-use self::memory::*;
+use self::{memory::Memory, path::RootPath};
 use anyhow::Result;
 use camino::Utf8Path;
 use std::sync::Arc;
@@ -9,21 +9,22 @@ mod document;
 mod entry;
 mod memory;
 mod mode;
+mod path;
 mod util;
 
 pub use self::{document::*, mode::*};
 
 #[derive(Debug, Clone)]
 pub struct Grimoire {
-    root: Arc<Utf8Path>,
+    root: RootPath,
     mem: Arc<RwLock<Memory>>,
 }
 
 impl Grimoire {
     pub async fn new(root: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
-        let root = root.into();
+        let root = RootPath::new(root.into());
         let mut mem = Memory::new(root.clone());
-        
+
         mode.read(&mut mem, &root).await?;
         mem.hydrate()?;
 

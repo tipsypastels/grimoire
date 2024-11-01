@@ -1,4 +1,4 @@
-use crate::{entry::Entry, MemoryMap};
+use crate::{entry::Entry, memory::MemoryMap};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use id_arena::Id;

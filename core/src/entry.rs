@@ -1,11 +1,16 @@
-use crate::{dependency::Dependency, document::Document, MemoryMap};
+use crate::{
+    dependency::Dependency,
+    document::Document,
+    memory::MemoryMap,
+    path::{EntryPath, RootPath},
+};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use enum_dispatch::enum_dispatch;
 
 #[derive(Debug)]
 pub struct Entry {
-    pub path: Box<Utf8Path>,
+    pub path: EntryPath,
     pub text: Option<Box<str>>,
     pub data: Option<EntryData>,
     pub ignored: bool,
@@ -13,9 +18,10 @@ pub struct Entry {
 }
 
 impl Entry {
-    pub fn new(path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
+    pub fn new(root: RootPath, path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
+        let path = EntryPath::new(root, path)?;
         let (data, ignored) = if let Some(text) = text.as_ref() {
-            match Self::new_data(&path, text)? {
+            match Self::new_data(&path.abs, text)? {
                 Some(data) => (Some(data), false),
                 None => (None, true),
             }
@@ -63,15 +69,9 @@ impl Entry {
             return Ok(());
         };
         for dep in deps {
-            dep.hydrate(&self.path, map)?;
+            dep.hydrate(&self.path.abs, map)?;
         }
         Ok(())
-    }
-
-    pub fn rel_path(&self, root: &Utf8Path) -> Result<&Utf8Path> {
-        let path = &self.path;
-        path.strip_prefix(root)
-            .with_context(|| format!("path {path} is not in root dir {root}"))
     }
 }
 

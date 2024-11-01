@@ -1,9 +1,10 @@
-use crate::entry::Entry;
+use std::sync::Arc;
+
+use crate::{entry::Entry, path::RootPath};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use hashbrown::HashMap;
 use id_arena::{Arena, Id};
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Memory {
@@ -12,7 +13,7 @@ pub struct Memory {
 }
 
 impl Memory {
-    pub fn new(root: Arc<Utf8Path>) -> Self {
+    pub fn new(root: RootPath) -> Self {
         Self {
             arena: Arena::new(),
             map: MemoryMap {
@@ -23,7 +24,7 @@ impl Memory {
     }
 
     pub fn insert(&mut self, entry: Entry) -> Result<()> {
-        let path = Box::from(entry.rel_path(&self.map.root)?);
+        let path = Arc::clone(&entry.path.rel);
         let id = self.arena.alloc(entry);
 
         self.map.paths.insert(path, id);
@@ -43,8 +44,8 @@ impl Memory {
 
 #[derive(Debug)]
 pub struct MemoryMap {
-    root: Arc<Utf8Path>,
-    paths: HashMap<Box<Utf8Path>, Id<Entry>>,
+    root: RootPath,
+    paths: HashMap<Arc<Utf8Path>, Id<Entry>>,
 }
 
 impl MemoryMap {
@@ -53,6 +54,6 @@ impl MemoryMap {
     }
 
     pub fn id_abs(&self, path: impl AsRef<Utf8Path>) -> Option<Id<Entry>> {
-        self.id(path.as_ref().strip_prefix(self.root.as_ref()).ok()?)
+        self.id(path.as_ref().strip_prefix(&self.root).ok()?)
     }
 }

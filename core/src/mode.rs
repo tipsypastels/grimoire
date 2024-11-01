@@ -1,6 +1,5 @@
-use crate::{entry::Entry, memory::Memory, util};
+use crate::{entry::Entry, memory::Memory, path::RootPath, util};
 use anyhow::Result;
-use camino::Utf8Path;
 use futures::{stream::FuturesUnordered, StreamExt};
 use std::pin::pin;
 
@@ -12,7 +11,7 @@ pub enum Mode {
 }
 
 impl Mode {
-    pub async fn read(self, mem: &mut Memory, root: &Utf8Path) -> Result<()> {
+    pub async fn read(self, mem: &mut Memory, root: &RootPath) -> Result<()> {
         match self {
             Self::WalkAndRead => mode_walk_and_read(mem, root).await,
             Self::Walk => mode_walk(mem, root).await,
@@ -21,25 +20,26 @@ impl Mode {
     }
 }
 
-async fn mode_walk_and_read(mem: &mut Memory, root: &Utf8Path) -> Result<()> {
-    let mut futures = pin!(util::walk_dir(root))
+async fn mode_walk_and_read(mem: &mut Memory, root: &RootPath) -> Result<()> {
+    let mut futures = pin!(util::walk_dir(root.as_ref()))
         .map(|path| async move {
             let text = util::read_to_string(&path).await?;
-            Entry::new(path.into(), Some(text.into()))
+            anyhow::Ok((path, text))
         })
         .collect::<FuturesUnordered<_>>()
         .await;
     while let Some(result) = futures.next().await {
-        let entry = result?;
+        let (path, text) = result?;
+        let entry = Entry::new(root.clone(), path.into(), Some(text.into()))?;
         mem.insert(entry)?;
     }
     Ok(())
 }
 
-async fn mode_walk(mem: &mut Memory, root: &Utf8Path) -> Result<()> {
-    let mut stream = pin!(util::walk_dir(root));
+async fn mode_walk(mem: &mut Memory, root: &RootPath) -> Result<()> {
+    let mut stream = pin!(util::walk_dir(root.as_ref()));
     while let Some(path) = stream.next().await {
-        let entry = Entry::new(path.into(), None)?;
+        let entry = Entry::new(root.clone(), path.into(), None)?;
         mem.insert(entry)?;
     }
     Ok(())
