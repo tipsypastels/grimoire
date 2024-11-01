@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
 
     tracing::debug!(%dir, "serving");
 
-    let grimoire = Grimoire::builder(dir).walk_and_read().await?.build();
+    let grimoire = Grimoire::new(dir, grimoire::Mode::WalkAndRead).await?;
     dbg!(grimoire);
 
     tracing::info!("hiii");

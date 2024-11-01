@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::{stream, Stream, StreamExt};
 
@@ -25,7 +26,13 @@ where
     }
 }
 
-pub fn walk_dir(path: &Utf8Path) -> impl WalkDir {
+pub async fn read_to_string(path: &Utf8Path) -> Result<String> {
+    tokio::fs::read_to_string(path)
+        .await
+        .with_context(|| format!("failed to read {path}"))
+}
+
+pub fn walk_dir(root: &Utf8Path) -> impl WalkDir {
     async fn read(path: Utf8PathBuf, stack: &mut Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
         let Ok(mut dir) = tokio::fs::read_dir(&path).await else {
             return Vec::new();
@@ -52,7 +59,7 @@ pub fn walk_dir(path: &Utf8Path) -> impl WalkDir {
         files
     }
 
-    stream::unfold(vec![path.to_owned()], |mut stack| async {
+    stream::unfold(vec![root.to_owned()], |mut stack| async {
         let path = stack.pop()?;
         let files = stream::iter(read(path, &mut stack).await);
         Some((files, stack))

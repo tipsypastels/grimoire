@@ -1,48 +1,31 @@
-use self::storage::Storage;
+use self::memory::*;
 use anyhow::Result;
 use camino::Utf8Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+mod dependency;
 mod document;
-mod storage;
+mod entry;
+mod memory;
+mod mode;
+mod util;
 
-#[derive(Debug)]
+pub use self::{document::*, mode::*};
+
+#[derive(Debug, Clone)]
 pub struct Grimoire {
     dir: Arc<Utf8Path>,
-    storage: Arc<RwLock<Storage>>,
+    mem: Arc<RwLock<Memory>>,
 }
 
 impl Grimoire {
-    pub fn builder(dir: impl Into<Arc<Utf8Path>>) -> GrimoireBuilder {
-        GrimoireBuilder {
-            dir: dir.into(),
-            storage: Storage::default(),
-        }
-    }
-}
+    pub async fn new(dir: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
+        let dir = dir.into();
+        let mut mem = Memory::new(dir.clone());
+        mode.read(&mut mem, &dir).await?;
 
-#[derive(Debug)]
-pub struct GrimoireBuilder {
-    dir: Arc<Utf8Path>,
-    storage: Storage,
-}
-
-impl GrimoireBuilder {
-    pub async fn walk(mut self) -> Self {
-        self.storage.walk(&self.dir).await;
-        self
-    }
-
-    pub async fn walk_and_read(mut self) -> Result<Self> {
-        self.storage.walk_and_read(&self.dir).await?;
-        Ok(self)
-    }
-
-    pub fn build(self) -> Grimoire {
-        Grimoire {
-            dir: self.dir,
-            storage: Arc::new(RwLock::new(self.storage)),
-        }
+        let mem = Arc::new(RwLock::new(mem));
+        Ok(Self { dir, mem })
     }
 }
