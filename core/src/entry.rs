@@ -2,7 +2,6 @@ use crate::document::Document;
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use enum_dispatch::enum_dispatch;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Entry {
