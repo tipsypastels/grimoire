@@ -6,7 +6,6 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use camino::Utf8Path;
-use enum_dispatch::enum_dispatch;
 
 #[derive(Debug)]
 pub struct Entry {
@@ -28,6 +27,11 @@ impl Entry {
         } else {
             (None, false)
         };
+
+        if !ignored {
+            let name = data.as_ref().and_then(|d| d.name());
+            tracing::debug!(name, %path, "entry");
+        }
 
         Ok(Self {
             path,
@@ -75,19 +79,47 @@ impl Entry {
     }
 }
 
-#[derive(Debug)]
-#[enum_dispatch(EntryType)]
-pub enum EntryData {
-    Document,
-}
-
-#[enum_dispatch]
 pub trait EntryType: Into<EntryData> {
+    fn name(&self) -> Option<&str> {
+        None
+    }
+
     fn dependencies(&self) -> Option<&[Dependency]> {
         None
     }
 
     fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
         None
+    }
+}
+
+#[derive(Debug)]
+pub enum EntryData {
+    Document(Document),
+}
+
+impl EntryType for EntryData {
+    fn name(&self) -> Option<&str> {
+        match self {
+            Self::Document(document) => document.name(),
+        }
+    }
+
+    fn dependencies(&self) -> Option<&[Dependency]> {
+        match self {
+            Self::Document(document) => document.dependencies(),
+        }
+    }
+
+    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
+        match self {
+            Self::Document(document) => document.dependencies_mut(),
+        }
+    }
+}
+
+impl From<Document> for EntryData {
+    fn from(document: Document) -> Self {
+        Self::Document(document)
     }
 }

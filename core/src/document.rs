@@ -38,6 +38,10 @@ impl Document {
 }
 
 impl EntryType for Document {
+    fn name(&self) -> Option<&str> {
+        Some(&self.head.name)
+    }
+
     fn dependencies(&self) -> Option<&[Dependency]> {
         self.head.deps.as_deref()
     }
