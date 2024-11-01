@@ -25,6 +25,21 @@ impl Memory {
         }
     }
 
+    pub fn get(&self, id: Id<Node>) -> Option<&Node> {
+        self.arena.get(id)
+    }
+
+    pub fn get_mut(&mut self, id: Id<Node>) -> Option<&mut Node> {
+        self.arena.get_mut(id)
+    }
+
+    pub fn get_id<K>(&self, key: &K) -> Option<Id<Node>>
+    where
+        K: AsMemoryMapKey + ?Sized,
+    {
+        self.map.get(key)
+    }
+
     pub fn insert(&mut self, node: Node) -> Result<()> {
         let path = node.path.rel.clone();
         let id = self.arena.alloc(node);
@@ -55,11 +70,29 @@ pub struct MemoryMap {
 }
 
 impl MemoryMap {
-    pub fn get(&self, key: &impl AsMemoryMapKey) -> Option<Id<Node>> {
+    pub fn get<K>(&self, key: &K) -> Option<Id<Node>>
+    where
+        K: AsMemoryMapKey + ?Sized,
+    {
         self.paths.get(key.as_memory_map_key()).copied()
     }
 }
 
 pub trait AsMemoryMapKey {
     fn as_memory_map_key(&self) -> &Utf8Path;
+}
+
+#[repr(transparent)]
+pub struct AssertMemoryMapKey(Utf8Path);
+
+impl AssertMemoryMapKey {
+    pub fn new(path: &Utf8Path) -> &Self {
+        unsafe { std::mem::transmute(path) }
+    }
+}
+
+impl AsMemoryMapKey for AssertMemoryMapKey {
+    fn as_memory_map_key(&self) -> &Utf8Path {
+        &self.0
+    }
 }

@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[derive(Debug, Clone)]
-pub struct App {
+struct App {
     grimoire: Grimoire,
 }
 
