@@ -83,15 +83,15 @@ pub trait AsMemoryMapKey {
 }
 
 #[repr(transparent)]
-pub struct AssertMemoryMapKey(Utf8Path);
+pub struct TryMemoryMapKey(Utf8Path);
 
-impl AssertMemoryMapKey {
+impl TryMemoryMapKey {
     pub fn new(path: &Utf8Path) -> &Self {
         unsafe { std::mem::transmute(path) }
     }
 }
 
-impl AsMemoryMapKey for AssertMemoryMapKey {
+impl AsMemoryMapKey for TryMemoryMapKey {
     fn as_memory_map_key(&self) -> &Utf8Path {
         &self.0
     }
