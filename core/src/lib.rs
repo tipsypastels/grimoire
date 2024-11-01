@@ -23,7 +23,9 @@ impl Grimoire {
     pub async fn new(root: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
         let root = root.into();
         let mut mem = Memory::new(root.clone());
+        
         mode.read(&mut mem, &root).await?;
+        mem.hydrate()?;
 
         let mem = Arc::new(RwLock::new(mem));
         Ok(Self { root, mem })

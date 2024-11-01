@@ -1,4 +1,4 @@
-use crate::document::Document;
+use crate::{dependency::Dependency, document::Document, MemoryMap};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use enum_dispatch::enum_dispatch;
@@ -55,6 +55,19 @@ impl Entry {
         }
     }
 
+    pub fn hydrate(&mut self, map: &MemoryMap) -> Result<()> {
+        let Some(data) = &mut self.data else {
+            return Ok(());
+        };
+        let Some(deps) = data.dependencies_mut() else {
+            return Ok(());
+        };
+        for dep in deps {
+            dep.hydrate(&self.path, map)?;
+        }
+        Ok(())
+    }
+
     pub fn rel_path(&self, root: &Utf8Path) -> Result<&Utf8Path> {
         let path = &self.path;
         path.strip_prefix(root)
@@ -69,4 +82,12 @@ pub enum EntryData {
 }
 
 #[enum_dispatch]
-pub trait EntryType: Into<EntryData> {}
+pub trait EntryType: Into<EntryData> {
+    fn dependencies(&self) -> Option<&[Dependency]> {
+        None
+    }
+
+    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
+        None
+    }
+}

@@ -1,4 +1,4 @@
-use crate::entry::EntryType;
+use crate::{dependency::Dependency, entry::EntryType};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use serde::Deserialize;
@@ -14,6 +14,8 @@ pub struct Document {
 #[non_exhaustive]
 pub struct DocumentHead {
     pub name: Box<str>,
+    #[serde(default)]
+    pub(crate) deps: Option<Box<[Dependency]>>,
 }
 
 #[derive(Debug)]
@@ -31,8 +33,16 @@ impl Document {
         let head = matter.data;
         let body = DocumentBody::Md(matter.content);
 
-        Ok(Self { head, body })
+        Ok(dbg!(Self { head, body }))
     }
 }
 
-impl EntryType for Document {}
+impl EntryType for Document {
+    fn dependencies(&self) -> Option<&[Dependency]> {
+        self.head.deps.as_deref()
+    }
+
+    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
+        self.head.deps.as_deref_mut()
+    }
+}
