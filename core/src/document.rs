@@ -1,6 +1,5 @@
-use crate::{dependency::Dependency, entry::EntryType};
+use crate::{dependency::Dependency, entry::EntryType, path::EntryPath};
 use anyhow::{Context, Result};
-use camino::Utf8Path;
 use serde::Deserialize;
 
 #[derive(Debug)]
@@ -24,7 +23,7 @@ pub enum DocumentBody {
 }
 
 impl Document {
-    pub(crate) fn new(_path: &Utf8Path, text: &str) -> Result<Self> {
+    pub(crate) fn new(_path: &EntryPath, text: &str) -> Result<Self> {
         let matter = gray_matter::Matter::<gray_matter::engine::YAML>::new();
         let matter = matter
             .parse_with_struct::<DocumentHead>(text)

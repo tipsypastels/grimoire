@@ -1,6 +1,7 @@
-use std::sync::Arc;
-
-use crate::{entry::Entry, path::RootPath};
+use crate::{
+    entry::Entry,
+    path::{EntryPathRel, RootPath},
+};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use hashbrown::HashMap;
@@ -24,7 +25,7 @@ impl Memory {
     }
 
     pub fn insert(&mut self, entry: Entry) -> Result<()> {
-        let path = Arc::clone(&entry.path.rel);
+        let path = entry.path.rel.clone();
         let id = self.arena.alloc(entry);
 
         self.map.paths.insert(path, id);
@@ -45,7 +46,7 @@ impl Memory {
 #[derive(Debug)]
 pub struct MemoryMap {
     root: RootPath,
-    paths: HashMap<Arc<Utf8Path>, Id<Entry>>,
+    paths: HashMap<EntryPathRel, Id<Entry>>,
 }
 
 impl MemoryMap {

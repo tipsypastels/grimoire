@@ -21,7 +21,7 @@ impl Mode {
 }
 
 async fn mode_walk_and_read(mem: &mut Memory, root: &RootPath) -> Result<()> {
-    let mut futures = pin!(util::walk_dir(root.as_ref()))
+    let mut futures = pin!(util::walk_dir(root))
         .map(|path| async move {
             let text = util::read_to_string(&path).await?;
             anyhow::Ok((path, text))
@@ -37,7 +37,7 @@ async fn mode_walk_and_read(mem: &mut Memory, root: &RootPath) -> Result<()> {
 }
 
 async fn mode_walk(mem: &mut Memory, root: &RootPath) -> Result<()> {
-    let mut stream = pin!(util::walk_dir(root.as_ref()));
+    let mut stream = pin!(util::walk_dir(root));
     while let Some(path) = stream.next().await {
         let entry = Entry::new(root.clone(), path.into(), None)?;
         mem.insert(entry)?;

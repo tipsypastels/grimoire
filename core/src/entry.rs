@@ -20,7 +20,7 @@ impl Entry {
     pub fn new(root: RootPath, path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
         let path = EntryPath::new(root, path)?;
         let (data, ignored) = if let Some(text) = text.as_ref() {
-            match Self::new_data(&path.abs, text)? {
+            match Self::new_data(&path, text)? {
                 Some(data) => (Some(data), false),
                 None => (None, true),
             }
@@ -42,7 +42,7 @@ impl Entry {
         })
     }
 
-    fn new_data(path: &Utf8Path, text: &str) -> Result<Option<EntryData>> {
+    fn new_data(path: &EntryPath, text: &str) -> Result<Option<EntryData>> {
         macro_rules! match_data {
             ($($pat:pat => $name:literal @ <$ty:ty>),*$(,)?) => {
                 match path.extension() {
