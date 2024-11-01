@@ -1,0 +1,16 @@
+[package]
+name = "grimoire-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+clap = { version = "4.5.20", features = ["derive", "env"] }
+dotenvy = "0.15.7"
+grimoire = { path = "../core" }
+grimoire-web = { path = "../web" }
+serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

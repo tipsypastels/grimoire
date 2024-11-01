@@ -1,0 +1,9 @@
+[package]
+name = "grimoire-web"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.7"
+grimoire = { path = "../core" }
+tokio.workspace = true

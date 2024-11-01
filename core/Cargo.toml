@@ -1,0 +1,17 @@
+[package]
+name = "grimoire"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+arc-swap = "1.7.1"
+camino.workspace = true
+futures.workspace = true
+gray_matter = "0.2.8"
+hashbrown = "0.15.0"
+id-arena = "2.2.1"
+mdxjs = "0.2.11"
+serde.workspace = true
+serde_yaml = "0.9.34"
+tokio.workspace = true
