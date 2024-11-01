@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     tracing::debug!(dir = %root, "serving");
 
     let grimoire = Grimoire::new(root, grimoire::Mode::WalkAndRead).await?;
-    dbg!(grimoire);
+    let _ = grimoire;
 
     tracing::info!("hiii");
     Ok(())

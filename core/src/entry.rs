@@ -73,7 +73,7 @@ impl Entry {
             return Ok(());
         };
         for dep in deps {
-            dep.hydrate(&self.path.abs, map)?;
+            dep.hydrate(&self.path, map)?;
         }
         Ok(())
     }

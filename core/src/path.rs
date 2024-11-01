@@ -1,3 +1,4 @@
+use crate::memory::AsMemoryMapKey;
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use std::{borrow::Borrow, fmt, ops::Deref, path::Path, sync::Arc};
@@ -76,8 +77,24 @@ impl EntryPath {
         Ok(Self { root, abs, rel })
     }
 
+    pub fn dependency(&self, dep: &Utf8Path) -> Result<Self> {
+        let parent = self.abs.parent().expect("path without parent");
+        let abs = parent
+            .join(dep)
+            .canonicalize_utf8()
+            .with_context(|| format!("couldn't canonicalize dependency {} from {}", dep, self))?;
+
+        Self::new(self.root.clone(), abs.into())
+    }
+
     pub fn extension(&self) -> Option<&str> {
         self.abs.extension()
+    }
+}
+
+impl AsMemoryMapKey for EntryPath {
+    fn as_memory_map_key(&self) -> &Utf8Path {
+        self.rel.as_memory_map_key()
     }
 }
 
@@ -96,6 +113,12 @@ as_ref_path_newtype!(EntryPathAbs);
 pub struct EntryPathRel(Arc<Utf8Path>);
 
 as_ref_path_newtype!(EntryPathRel);
+
+impl AsMemoryMapKey for EntryPathRel {
+    fn as_memory_map_key(&self) -> &Utf8Path {
+        self
+    }
+}
 
 impl fmt::Display for EntryPathRel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

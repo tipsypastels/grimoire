@@ -23,7 +23,7 @@ pub enum DocumentBody {
 }
 
 impl Document {
-    pub(crate) fn new(_path: &EntryPath, text: &str) -> Result<Self> {
+    pub(crate) fn new(path: &EntryPath, text: &str) -> Result<Self> {
         let matter = gray_matter::Matter::<gray_matter::engine::YAML>::new();
         let matter = matter
             .parse_with_struct::<DocumentHead>(text)
@@ -32,7 +32,8 @@ impl Document {
         let head = matter.data;
         let body = DocumentBody::Md(matter.content);
 
-        Ok(dbg!(Self { head, body }))
+        tracing::debug!(name = head.name, %path, "document");
+        Ok(Self { head, body })
     }
 }
 

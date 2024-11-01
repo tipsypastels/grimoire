@@ -1,5 +1,6 @@
 use crate::{
     entry::Entry,
+    mode::Mode,
     path::{EntryPathRel, RootPath},
 };
 use anyhow::{Context, Result};
@@ -13,12 +14,12 @@ pub struct Memory {
     map: MemoryMap,
 }
 
+#[allow(clippy::new_without_default)]
 impl Memory {
-    pub fn new(root: RootPath) -> Self {
+    pub fn new() -> Self {
         Self {
             arena: Arena::new(),
             map: MemoryMap {
-                root,
                 paths: HashMap::new(),
             },
         }
@@ -32,6 +33,12 @@ impl Memory {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, root))]
+    pub async fn read(&mut self, mode: Mode, root: &RootPath) -> Result<()> {
+        mode.read(self, root).await
+    }
+
+    #[tracing::instrument(skip(self))]
     pub fn hydrate(&mut self) -> Result<()> {
         for (_, entry) in self.arena.iter_mut() {
             entry
@@ -45,16 +52,15 @@ impl Memory {
 
 #[derive(Debug)]
 pub struct MemoryMap {
-    root: RootPath,
     paths: HashMap<EntryPathRel, Id<Entry>>,
 }
 
 impl MemoryMap {
-    pub fn id(&self, path: impl AsRef<Utf8Path>) -> Option<Id<Entry>> {
-        self.paths.get(path.as_ref()).copied()
+    pub fn get(&self, key: &impl AsMemoryMapKey) -> Option<Id<Entry>> {
+        self.paths.get(key.as_memory_map_key()).copied()
     }
+}
 
-    pub fn id_abs(&self, path: impl AsRef<Utf8Path>) -> Option<Id<Entry>> {
-        self.id(path.as_ref().strip_prefix(&self.root).ok()?)
-    }
+pub trait AsMemoryMapKey {
+    fn as_memory_map_key(&self) -> &Utf8Path;
 }
