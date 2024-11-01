@@ -12,17 +12,17 @@ pub enum Mode {
 }
 
 impl Mode {
-    pub async fn read(self, mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
+    pub async fn read(self, mem: &mut Memory, root: &Utf8Path) -> Result<()> {
         match self {
-            Self::WalkAndRead => mode_walk_and_read(mem, dir).await,
-            Self::Walk => mode_walk(mem, dir).await,
+            Self::WalkAndRead => mode_walk_and_read(mem, root).await,
+            Self::Walk => mode_walk(mem, root).await,
             Self::Noop => Ok(()),
         }
     }
 }
 
-async fn mode_walk_and_read(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
-    let mut futures = pin!(util::walk_dir(dir))
+async fn mode_walk_and_read(mem: &mut Memory, root: &Utf8Path) -> Result<()> {
+    let mut futures = pin!(util::walk_dir(root))
         .map(|path| async move {
             let text = util::read_to_string(&path).await?;
             Entry::new(path.into(), Some(text.into()))
@@ -36,8 +36,8 @@ async fn mode_walk_and_read(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
     Ok(())
 }
 
-async fn mode_walk(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
-    let mut stream = pin!(util::walk_dir(dir));
+async fn mode_walk(mem: &mut Memory, root: &Utf8Path) -> Result<()> {
+    let mut stream = pin!(util::walk_dir(root));
     while let Some(path) = stream.next().await {
         let entry = Entry::new(path.into(), None)?;
         mem.insert(entry)?;

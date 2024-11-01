@@ -8,7 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Parser)]
 struct Opts {
-    dir: Option<Utf8PathBuf>,
+    root: Option<Utf8PathBuf>,
 
     #[clap(long = "port", env = "PORT", default_value = "5173")]
     port: u16,
@@ -23,15 +23,15 @@ async fn main() -> Result<()> {
     setup_tracing()?;
     tracing::debug!("{opts:#?}");
 
-    let dir = opts
-        .dir
+    let root = opts
+        .root
         .or_else(|| env::current_dir().ok()?.try_into().ok())
         .and_then(|d| d.canonicalize_utf8().ok())
         .context("invalid directory")?;
 
-    tracing::debug!(%dir, "serving");
+    tracing::debug!(dir = %root, "serving");
 
-    let grimoire = Grimoire::new(dir, grimoire::Mode::WalkAndRead).await?;
+    let grimoire = Grimoire::new(root, grimoire::Mode::WalkAndRead).await?;
     dbg!(grimoire);
 
     tracing::info!("hiii");

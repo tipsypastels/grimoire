@@ -56,10 +56,10 @@ impl Entry {
         }
     }
 
-    pub fn rel_path(&self, dir: &Utf8Path) -> Result<&Utf8Path> {
-        self.path
-            .strip_prefix(dir)
-            .with_context(|| format!("path {} is not in root dir {dir}", self.path))
+    pub fn rel_path(&self, root: &Utf8Path) -> Result<&Utf8Path> {
+        let path = &self.path;
+        path.strip_prefix(root)
+            .with_context(|| format!("path {path} is not in root dir {root}"))
     }
 }
 

@@ -15,17 +15,17 @@ pub use self::{document::*, mode::*};
 
 #[derive(Debug, Clone)]
 pub struct Grimoire {
-    dir: Arc<Utf8Path>,
+    root: Arc<Utf8Path>,
     mem: Arc<RwLock<Memory>>,
 }
 
 impl Grimoire {
-    pub async fn new(dir: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
-        let dir = dir.into();
-        let mut mem = Memory::new(dir.clone());
-        mode.read(&mut mem, &dir).await?;
+    pub async fn new(root: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
+        let root = root.into();
+        let mut mem = Memory::new(root.clone());
+        mode.read(&mut mem, &root).await?;
 
         let mem = Arc::new(RwLock::new(mem));
-        Ok(Self { dir, mem })
+        Ok(Self { root, mem })
     }
 }
