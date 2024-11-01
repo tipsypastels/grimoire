@@ -2,23 +2,23 @@ use crate::{
     dependency::Dependency,
     document::Document,
     memory::MemoryMap,
-    path::{EntryPath, RootPath},
+    path::{NodePath, RootPath},
 };
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 
 #[derive(Debug)]
-pub struct Entry {
-    pub path: EntryPath,
+pub struct Node {
+    pub path: NodePath,
     pub text: Option<Box<str>>,
-    pub data: Option<EntryData>,
+    pub data: Option<NodeData>,
     pub ignored: bool,
     pub deleted: bool,
 }
 
-impl Entry {
+impl Node {
     pub fn new(root: RootPath, path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
-        let path = EntryPath::new(root, path)?;
+        let path = NodePath::new(root, path)?;
         let (data, ignored) = if let Some(text) = text.as_ref() {
             match Self::new_data(&path, text)? {
                 Some(data) => (Some(data), false),
@@ -30,7 +30,7 @@ impl Entry {
 
         if !ignored {
             let name = data.as_ref().and_then(|d| d.name());
-            tracing::debug!(name, %path, "entry");
+            tracing::debug!(name, %path, "node");
         }
 
         Ok(Self {
@@ -42,7 +42,7 @@ impl Entry {
         })
     }
 
-    fn new_data(path: &EntryPath, text: &str) -> Result<Option<EntryData>> {
+    fn new_data(path: &NodePath, text: &str) -> Result<Option<NodeData>> {
         macro_rules! match_data {
             ($($pat:pat => $name:literal @ <$ty:ty>),*$(,)?) => {
                 match path.extension() {
@@ -79,7 +79,7 @@ impl Entry {
     }
 }
 
-pub trait EntryType: Into<EntryData> {
+pub trait NodeType: Into<NodeData> {
     fn name(&self) -> Option<&str> {
         None
     }
@@ -94,11 +94,11 @@ pub trait EntryType: Into<EntryData> {
 }
 
 #[derive(Debug)]
-pub enum EntryData {
+pub enum NodeData {
     Document(Document),
 }
 
-impl EntryType for EntryData {
+impl NodeType for NodeData {
     fn name(&self) -> Option<&str> {
         match self {
             Self::Document(document) => document.name(),
@@ -118,7 +118,7 @@ impl EntryType for EntryData {
     }
 }
 
-impl From<Document> for EntryData {
+impl From<Document> for NodeData {
     fn from(document: Document) -> Self {
         Self::Document(document)
     }

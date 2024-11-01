@@ -1,4 +1,4 @@
-use crate::{entry::Entry, memory::MemoryMap, path::EntryPath};
+use crate::{memory::MemoryMap, node::Node, path::NodePath};
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use id_arena::Id;
@@ -7,18 +7,17 @@ use serde::{Deserialize, Deserializer};
 #[derive(Debug)]
 pub struct Dependency {
     rel: Box<Utf8Path>,
-    id: Option<Id<Entry>>,
+    id: Option<Id<Node>>,
 }
 
 impl Dependency {
-    pub fn hydrate(&mut self, entry_path: &EntryPath, map: &MemoryMap) -> Result<()> {
-        let rel = &self.rel;
-        let path = entry_path.dependency(rel)?;
+    pub fn hydrate(&mut self, from: &NodePath, map: &MemoryMap) -> Result<()> {
+        let to = from.dependency(&self.rel)?;
         let id = map
-            .get(&path)
-            .with_context(|| format!("unknown dependency {path} for {entry_path}"))?;
+            .get(&to)
+            .with_context(|| format!("unknown dependency {to} for {from}"))?;
 
-        tracing::debug!(from = %entry_path, to = %path, "dependency");
+        tracing::debug!(%from, %to, "dependency");
         self.id = Some(id);
         Ok(())
     }

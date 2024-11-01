@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use camino::Utf8Path;
 use std::{borrow::Borrow, fmt, ops::Deref, path::Path, sync::Arc};
 
-macro_rules! as_ref_path_newtype {
+macro_rules! path_newtype {
     ($ty:ty) => {
         impl AsRef<Path> for $ty {
             fn as_ref(&self) -> &Path {
@@ -48,7 +48,7 @@ impl RootPath {
     }
 }
 
-as_ref_path_newtype!(RootPath);
+path_newtype!(RootPath);
 
 impl fmt::Display for RootPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -57,22 +57,22 @@ impl fmt::Display for RootPath {
 }
 
 #[derive(Debug)]
-pub struct EntryPath {
+pub struct NodePath {
     pub root: RootPath,
-    pub abs: EntryPathAbs,
+    pub abs: NodePathAbs,
     // Arc because it's the MemoryMap key.
-    pub rel: EntryPathRel,
+    pub rel: NodePathRel,
 }
 
-impl EntryPath {
+impl NodePath {
     pub fn new(root: RootPath, abs: Box<Utf8Path>) -> Result<Self> {
         let rel = abs
             .strip_prefix(&root)
             .with_context(|| format!("path {abs} is not in root {root}"))?
             .into();
 
-        let abs = EntryPathAbs(abs);
-        let rel = EntryPathRel(rel);
+        let abs = NodePathAbs(abs);
+        let rel = NodePathRel(rel);
 
         Ok(Self { root, abs, rel })
     }
@@ -92,35 +92,35 @@ impl EntryPath {
     }
 }
 
-impl AsMemoryMapKey for EntryPath {
+impl AsMemoryMapKey for NodePath {
     fn as_memory_map_key(&self) -> &Utf8Path {
         self.rel.as_memory_map_key()
     }
 }
 
-impl fmt::Display for EntryPath {
+impl fmt::Display for NodePath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.rel)
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct EntryPathAbs(Box<Utf8Path>);
+pub struct NodePathAbs(Box<Utf8Path>);
 
-as_ref_path_newtype!(EntryPathAbs);
+path_newtype!(NodePathAbs);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct EntryPathRel(Arc<Utf8Path>);
+pub struct NodePathRel(Arc<Utf8Path>);
 
-as_ref_path_newtype!(EntryPathRel);
+path_newtype!(NodePathRel);
 
-impl AsMemoryMapKey for EntryPathRel {
+impl AsMemoryMapKey for NodePathRel {
     fn as_memory_map_key(&self) -> &Utf8Path {
         self
     }
 }
 
-impl fmt::Display for EntryPathRel {
+impl fmt::Display for NodePathRel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }

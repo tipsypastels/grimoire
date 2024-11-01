@@ -1,4 +1,4 @@
-use crate::{dependency::Dependency, entry::EntryType, path::EntryPath};
+use crate::{dependency::Dependency, node::NodeType, path::NodePath};
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
@@ -23,7 +23,7 @@ pub enum DocumentBody {
 }
 
 impl Document {
-    pub(crate) fn new(path: &EntryPath, text: &str) -> Result<Self> {
+    pub(crate) fn new(path: &NodePath, text: &str) -> Result<Self> {
         let matter = gray_matter::Matter::<gray_matter::engine::YAML>::new();
         let matter = matter
             .parse_with_struct::<DocumentHead>(text)
@@ -37,7 +37,7 @@ impl Document {
     }
 }
 
-impl EntryType for Document {
+impl NodeType for Document {
     fn name(&self) -> Option<&str> {
         Some(&self.head.name)
     }

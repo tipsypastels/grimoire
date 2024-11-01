@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 
 mod dependency;
 mod document;
-mod entry;
+mod node;
 mod memory;
 mod mode;
 mod path;

@@ -1,7 +1,7 @@
 use crate::{
-    entry::Entry,
     mode::Mode,
-    path::{EntryPathRel, RootPath},
+    node::Node,
+    path::{NodePathRel, RootPath},
 };
 use anyhow::{Context, Result};
 use camino::Utf8Path;
@@ -10,7 +10,7 @@ use id_arena::{Arena, Id};
 
 #[derive(Debug)]
 pub struct Memory {
-    arena: Arena<Entry>,
+    arena: Arena<Node>,
     map: MemoryMap,
 }
 
@@ -25,9 +25,9 @@ impl Memory {
         }
     }
 
-    pub fn insert(&mut self, entry: Entry) -> Result<()> {
-        let path = entry.path.rel.clone();
-        let id = self.arena.alloc(entry);
+    pub fn insert(&mut self, node: Node) -> Result<()> {
+        let path = node.path.rel.clone();
+        let id = self.arena.alloc(node);
 
         self.map.paths.insert(path, id);
         Ok(())
@@ -40,10 +40,9 @@ impl Memory {
 
     #[tracing::instrument(skip(self))]
     pub fn hydrate(&mut self) -> Result<()> {
-        for (_, entry) in self.arena.iter_mut() {
-            entry
-                .hydrate(&self.map)
-                .with_context(|| format!("failed to hydrate entry {}", entry.path))?;
+        for (_, node) in self.arena.iter_mut() {
+            node.hydrate(&self.map)
+                .with_context(|| format!("failed to hydrate node {}", node.path))?;
         }
 
         Ok(())
@@ -52,11 +51,11 @@ impl Memory {
 
 #[derive(Debug)]
 pub struct MemoryMap {
-    paths: HashMap<EntryPathRel, Id<Entry>>,
+    paths: HashMap<NodePathRel, Id<Node>>,
 }
 
 impl MemoryMap {
-    pub fn get(&self, key: &impl AsMemoryMapKey) -> Option<Id<Entry>> {
+    pub fn get(&self, key: &impl AsMemoryMapKey) -> Option<Id<Node>> {
         self.paths.get(key.as_memory_map_key()).copied()
     }
 }

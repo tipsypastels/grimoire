@@ -1,4 +1,4 @@
-use crate::{entry::Entry, memory::Memory, path::RootPath, util};
+use crate::{memory::Memory, node::Node, path::RootPath, util};
 use anyhow::Result;
 use futures::{stream::FuturesUnordered, StreamExt};
 use std::pin::pin;
@@ -30,8 +30,8 @@ async fn mode_walk_and_read(mem: &mut Memory, root: &RootPath) -> Result<()> {
         .await;
     while let Some(result) = futures.next().await {
         let (path, text) = result?;
-        let entry = Entry::new(root.clone(), path.into(), Some(text.into()))?;
-        mem.insert(entry)?;
+        let node = Node::new(root.clone(), path.into(), Some(text.into()))?;
+        mem.insert(node)?;
     }
     Ok(())
 }
@@ -39,8 +39,8 @@ async fn mode_walk_and_read(mem: &mut Memory, root: &RootPath) -> Result<()> {
 async fn mode_walk(mem: &mut Memory, root: &RootPath) -> Result<()> {
     let mut stream = pin!(util::walk_dir(root));
     while let Some(path) = stream.next().await {
-        let entry = Entry::new(root.clone(), path.into(), None)?;
-        mem.insert(entry)?;
+        let node = Node::new(root.clone(), path.into(), None)?;
+        mem.insert(node)?;
     }
     Ok(())
 }
