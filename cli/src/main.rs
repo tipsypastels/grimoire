@@ -31,9 +31,8 @@ async fn main() -> Result<()> {
 
     tracing::debug!(%dir, "serving");
 
-    let grimoire = Grimoire::new(dir, grimoire::read::Eager)
-        .await
-        .context("failed to open grimoire")?;
+    let grimoire = Grimoire::builder(dir).walk_and_read().await?.build();
+    dbg!(grimoire);
 
     tracing::info!("hiii");
     Ok(())
