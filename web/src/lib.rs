@@ -1,8 +1,7 @@
-use std::net::SocketAddr;
-
 use anyhow::Result;
 use axum::{routing::get, Router};
 use grimoire::Grimoire;
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[derive(Debug, Clone)]
