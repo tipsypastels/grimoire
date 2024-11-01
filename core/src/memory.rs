@@ -1,4 +1,5 @@
 use crate::entry::Entry;
+use anyhow::Result;
 use camino::Utf8Path;
 use hashbrown::HashMap;
 use id_arena::{Arena, Id};
@@ -8,7 +9,7 @@ use std::sync::Arc;
 pub struct Memory {
     pub dir: Arc<Utf8Path>,
     arena: Arena<Entry>,
-    paths: HashMap<Arc<Utf8Path>, Id<Entry>>,
+    paths: HashMap<Box<Utf8Path>, Id<Entry>>,
 }
 
 impl Memory {
@@ -20,9 +21,11 @@ impl Memory {
         }
     }
 
-    pub fn insert(&mut self, entry: Entry) {
-        let path = Arc::clone(&entry.path);
+    pub fn insert(&mut self, entry: Entry) -> Result<()> {
+        let path = Box::from(entry.rel_path(&self.dir)?);
         let id = self.arena.alloc(entry);
+
         self.paths.insert(path, id);
+        Ok(())
     }
 }

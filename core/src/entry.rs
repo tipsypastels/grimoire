@@ -6,15 +6,15 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Entry {
-    pub path: Arc<Utf8Path>,
-    pub text: Option<Arc<str>>,
+    pub path: Box<Utf8Path>,
+    pub text: Option<Box<str>>,
     pub data: Option<EntryData>,
     pub ignored: bool,
     pub deleted: bool,
 }
 
 impl Entry {
-    pub fn new(path: Arc<Utf8Path>, text: Option<Arc<str>>) -> Result<Self> {
+    pub fn new(path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
         let (data, ignored) = if let Some(text) = text.as_ref() {
             match Self::new_data(&path, text)? {
                 Some(data) => (Some(data), false),
@@ -54,6 +54,12 @@ impl Entry {
         match_data! {
             "md" | "mdx" => "document" @ <Document>,
         }
+    }
+
+    pub fn rel_path(&self, dir: &Utf8Path) -> Result<&Utf8Path> {
+        self.path
+            .strip_prefix(dir)
+            .with_context(|| format!("path {} is not in root dir {dir}", self.path))
     }
 }
 

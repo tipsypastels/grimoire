@@ -29,8 +29,9 @@ async fn mode_walk_and_read(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
         })
         .collect::<FuturesUnordered<_>>()
         .await;
-    while let Some(entry) = futures.next().await {
-        mem.insert(entry?);
+    while let Some(result) = futures.next().await {
+        let entry = result?;
+        mem.insert(entry)?;
     }
     Ok(())
 }
@@ -38,7 +39,8 @@ async fn mode_walk_and_read(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
 async fn mode_walk(mem: &mut Memory, dir: &Utf8Path) -> Result<()> {
     let mut stream = pin!(util::walk_dir(dir));
     while let Some(path) = stream.next().await {
-        mem.insert(Entry::new(path.into(), None)?);
+        let entry = Entry::new(path.into(), None)?;
+        mem.insert(entry)?;
     }
     Ok(())
 }
