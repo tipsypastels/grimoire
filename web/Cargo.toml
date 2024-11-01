@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow.workspace = true
 axum = "0.7.7"
 grimoire = { path = "../core" }
+serde.workspace = true
 tokio.workspace = true
+tracing.workspace = true

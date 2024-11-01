@@ -652,9 +652,12 @@ dependencies = [
 name = "grimoire-web"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "grimoire",
+ "serde",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

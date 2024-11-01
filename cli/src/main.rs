@@ -29,13 +29,11 @@ async fn main() -> Result<()> {
         .and_then(|d| d.canonicalize_utf8().ok())
         .context("invalid directory")?;
 
-    tracing::debug!(dir = %root, "serving");
+    tracing::debug!(dir = %root, "reading");
 
     let grimoire = Grimoire::new(root, grimoire::Mode::WalkAndRead).await?;
-    let _ = grimoire;
 
-    tracing::info!("hiii");
-    Ok(())
+    grimoire_web::serve(grimoire, opts.port).await
 }
 
 fn setup_tracing() -> Result<()> {
