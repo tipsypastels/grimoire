@@ -1,52 +1,48 @@
-use crate::{dependency::Dependency, node::NodeType, path::NodePath};
+use crate::{dependency::DependencyRef, path::NodePath, NodeDataTrait};
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 #[non_exhaustive]
 pub struct Document {
     pub head: DocumentHead,
     pub body: DocumentBody,
 }
 
-#[derive(Debug, Deserialize)]
-#[non_exhaustive]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DocumentHead {
-    pub name: Box<str>,
-    #[serde(default)]
-    pub(crate) deps: Option<Box<[Dependency]>>,
+    pub name: Arc<str>,
+    #[serde(default, skip_serializing)]
+    pub(crate) deps: Option<Arc<[DependencyRef]>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum DocumentBody {
-    Md(String),
+    Md(Box<str>),
 }
 
 impl Document {
-    pub(crate) fn new(path: &NodePath, text: &str) -> Result<Self> {
+    pub fn new(path: &NodePath, text: &str) -> Result<Self> {
         let matter = gray_matter::Matter::<gray_matter::engine::YAML>::new();
         let matter = matter
             .parse_with_struct::<DocumentHead>(text)
             .context("no front matter")?;
 
         let head = matter.data;
-        let body = DocumentBody::Md(matter.content);
+        let body = DocumentBody::Md(matter.content.into());
 
-        tracing::debug!(name = head.name, %path, "document");
+        tracing::debug!(name = %head.name, %path, "document");
         Ok(Self { head, body })
     }
 }
 
-impl NodeType for Document {
-    fn name(&self) -> Option<&str> {
-        Some(&self.head.name)
+impl NodeDataTrait for Document {
+    fn name(&self) -> Arc<str> {
+        self.head.name.clone()
     }
 
-    fn dependencies(&self) -> Option<&[Dependency]> {
-        self.head.deps.as_deref()
-    }
-
-    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
-        self.head.deps.as_deref_mut()
+    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>> {
+        self.head.deps.clone()
     }
 }

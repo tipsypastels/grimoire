@@ -1,81 +1,52 @@
-use self::{memory::Memory, path::RootPath};
+use self::{arena::Arena, path::RootPath};
 use anyhow::Result;
 use camino::Utf8Path;
-use std::{
-    ops::{Deref, DerefMut},
-    sync::Arc,
-};
-use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
+use std::{ops::Deref, sync::Arc};
+use tokio::sync::{RwLock, RwLockReadGuard};
 
+mod arena;
 mod dependency;
 mod document;
-mod memory;
-mod mode;
 mod node;
 mod path;
 mod util;
 
-pub use self::{document::*, mode::*, node::*};
+pub use self::{document::*, node::*};
 
 #[derive(Debug, Clone)]
 pub struct Grimoire {
     root: RootPath,
-    mem: Arc<RwLock<Memory>>,
+    arena: Arc<RwLock<Arena>>,
 }
 
 impl Grimoire {
-    pub async fn new(root: impl Into<Arc<Utf8Path>>, mode: Mode) -> Result<Self> {
-        let root = RootPath::new(root.into());
-        let mut mem = Memory::new();
+    pub async fn new(root: Arc<Utf8Path>) -> Result<Self> {
+        let root = RootPath::new(root);
+        let mut arena = Arena::default();
 
-        mem.read(mode, &root).await?;
-        mem.hydrate()?;
+        arena.load_all(&root).await?;
+        arena.hydrate_all()?;
 
-        let mem = Arc::new(RwLock::new(mem));
-        Ok(Self { root, mem })
+        let arena = Arc::new(RwLock::new(arena));
+        Ok(Self { root, arena })
     }
 
-    pub async fn get(&self, path: impl AsRef<Utf8Path>) -> Option<Ref<'_>> {
-        RwLockReadGuard::try_map(self.mem.read().await, |mem| {
-            mem.get(mem.get_id(memory::TryMemoryMapKey::new(path.as_ref()))?)
+    pub async fn get(&self, path: impl AsRef<Utf8Path>) -> Option<Page<'_>> {
+        RwLockReadGuard::try_map(self.arena.read().await, |arena| {
+            arena.get(arena.get_id(arena::AsArenaPath::new(path.as_ref()))?)
         })
-        .map(Ref)
-        .ok()
-    }
-
-    pub async fn get_mut(&self, path: impl AsRef<Utf8Path>) -> Option<RefMut<'_>> {
-        RwLockWriteGuard::try_map(self.mem.write().await, |mem| {
-            mem.get_mut(mem.get_id(memory::TryMemoryMapKey::new(path.as_ref()))?)
-        })
-        .map(RefMut)
+        .map(Page)
         .ok()
     }
 }
 
 #[derive(Debug)]
-pub struct Ref<'a>(RwLockReadGuard<'a, Node>);
+pub struct Page<'a>(RwLockReadGuard<'a, Node>);
 
-impl Deref for Ref<'_> {
+impl Deref for Page<'_> {
     type Target = Node;
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-#[derive(Debug)]
-pub struct RefMut<'a>(RwLockMappedWriteGuard<'a, Node>);
-
-impl Deref for RefMut<'_> {
-    type Target = Node;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for RefMut<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }

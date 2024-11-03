@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow.workspace = true
-arc-swap = "1.7.1"
+arc-swap = { version = "1.7.1", features = ["serde"] }
 camino.workspace = true
 futures.workspace = true
 gray_matter = "0.2.8"

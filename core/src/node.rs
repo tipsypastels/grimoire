@@ -1,125 +1,117 @@
 use crate::{
-    dependency::Dependency,
+    arena::ArenaPaths,
+    dependency::DependencyRef,
     document::Document,
-    memory::MemoryMap,
     path::{NodePath, RootPath},
 };
 use anyhow::{Context, Result};
+use arc_swap::{ArcSwap, ArcSwapOption};
 use camino::Utf8Path;
+use serde::Serialize;
+use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Node {
     pub path: NodePath,
-    pub text: Option<Box<str>>,
-    pub data: Option<NodeData>,
-    pub ignored: bool,
-    pub deleted: bool,
+    name: ArcSwap<Arc<str>>,
+    #[serde(skip_serializing)]
+    deps: ArcSwapOption<Arc<[DependencyRef]>>,
+    kind: NodeDataKind,
 }
 
 impl Node {
-    pub fn new(root: RootPath, path: Box<Utf8Path>, text: Option<Box<str>>) -> Result<Self> {
+    pub async fn new(root: RootPath, path: Box<Utf8Path>, text: &str) -> Result<Option<Self>> {
         let path = NodePath::new(root, path)?;
-        let (data, ignored) = if let Some(text) = text.as_ref() {
-            match Self::new_data(&path, text)? {
-                Some(data) => (Some(data), false),
-                None => (None, true),
-            }
-        } else {
-            (None, false)
+        let Some(kind) = NodeDataKind::determine(path.extension()) else {
+            return Ok(None);
         };
 
-        if !ignored {
-            let name = data.as_ref().and_then(|d| d.name());
-            tracing::debug!(name, %path, "node");
-        }
+        let data = kind.create(&path, text)?;
+        let name = data.name();
+        let deps = data.dependency_refs();
 
-        Ok(Self {
+        tracing::debug!(%name, %path, "node");
+
+        let name = ArcSwap::from_pointee(name);
+        let deps = ArcSwapOption::from_pointee(deps);
+
+        Ok(Some(Self {
             path,
-            text,
-            data,
-            ignored,
-            deleted: false,
-        })
+            name,
+            deps,
+            kind,
+        }))
     }
 
-    fn new_data(path: &NodePath, text: &str) -> Result<Option<NodeData>> {
-        macro_rules! match_data {
-            ($($pat:pat => $name:literal @ <$ty:ty>),*$(,)?) => {
-                match path.extension() {
-                    $(
-                        Some($pat) => {
-                            let data = <$ty>::new(path, text)
-                                .with_context(|| format!(concat!("failed to create ", $name, " {}"), path))?;
-
-                            Ok(Some(data.into()))
-                        },
-                    )*
-                    Some(_) => Ok(None),
-                    None => Ok(None),
-                }
-            };
-        }
-
-        match_data! {
-            "md" | "mdx" => "document" @ <Document>,
-        }
-    }
-
-    pub fn hydrate(&mut self, map: &MemoryMap) -> Result<()> {
-        let Some(data) = &mut self.data else {
+    pub fn hydrate(&self, path_map: &ArenaPaths) -> Result<()> {
+        let deps = self.deps.load();
+        let Some(deps) = deps.as_deref() else {
             return Ok(());
         };
-        let Some(deps) = data.dependencies_mut() else {
-            return Ok(());
-        };
-        for dep in deps {
-            dep.hydrate(&self.path, map)?;
+        for dep in deps.as_ref() {
+            dep.hydrate(&self.path, path_map)?;
         }
         Ok(())
     }
 }
 
-pub trait NodeType: Into<NodeData> {
-    fn name(&self) -> Option<&str> {
-        None
-    }
-
-    fn dependencies(&self) -> Option<&[Dependency]> {
-        None
-    }
-
-    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
-        None
-    }
+#[derive(Debug, Serialize)]
+pub struct NodeContent {
+    pub text: Box<str>,
+    pub data: NodeData,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum NodeData {
     Document(Document),
 }
 
-impl NodeType for NodeData {
-    fn name(&self) -> Option<&str> {
+impl NodeDataTrait for NodeData {
+    fn name(&self) -> Arc<str> {
         match self {
-            Self::Document(document) => document.name(),
+            Self::Document(d) => d.name(),
         }
     }
 
-    fn dependencies(&self) -> Option<&[Dependency]> {
+    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>> {
         match self {
-            Self::Document(document) => document.dependencies(),
-        }
-    }
-
-    fn dependencies_mut(&mut self) -> Option<&mut [Dependency]> {
-        match self {
-            Self::Document(document) => document.dependencies_mut(),
+            Self::Document(d) => d.dependency_refs(),
         }
     }
 }
 
-impl From<Document> for NodeData {
-    fn from(document: Document) -> Self {
-        Self::Document(document)
+#[derive(Debug, Serialize, Copy, Clone)]
+pub enum NodeDataKind {
+    Document,
+}
+
+impl NodeDataKind {
+    fn create(self, path: &NodePath, text: &str) -> Result<NodeData> {
+        macro_rules! match_kind {
+            ($(($kind:ident, $tag:literal)),*$(,)?) => {
+                match self {
+                    $(
+                        Self::$kind => Ok(NodeData::$kind($kind::new(path, text).with_context(|| format!(concat!("failed to create ", $tag, " {}"), path))?))
+                    )*
+                }
+            };
+
+        }
+
+        match_kind! {
+            (Document, "document"),
+        }
     }
+
+    fn determine(extension: Option<&str>) -> Option<Self> {
+        match extension {
+            Some("md") => Some(Self::Document),
+            _ => None,
+        }
+    }
+}
+
+pub(crate) trait NodeDataTrait {
+    fn name(&self) -> Arc<str>;
+    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>>;
 }

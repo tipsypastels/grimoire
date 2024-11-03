@@ -1,6 +1,7 @@
-use crate::memory::AsMemoryMapKey;
+use crate::arena::ArenaPath;
 use anyhow::{Context, Result};
 use camino::Utf8Path;
+use serde::Serialize;
 use std::{borrow::Borrow, fmt, ops::Deref, path::Path, sync::Arc};
 
 macro_rules! path_newtype {
@@ -56,8 +57,9 @@ impl fmt::Display for RootPath {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct NodePath {
+    #[serde(skip_serializing)]
     pub root: RootPath,
     pub abs: NodePathAbs,
     // Arc because it's the MemoryMap key.
@@ -92,9 +94,9 @@ impl NodePath {
     }
 }
 
-impl AsMemoryMapKey for NodePath {
-    fn as_memory_map_key(&self) -> &Utf8Path {
-        self.rel.as_memory_map_key()
+impl ArenaPath for NodePath {
+    fn arena_path(&self) -> &Utf8Path {
+        self.rel.arena_path()
     }
 }
 
@@ -104,18 +106,18 @@ impl fmt::Display for NodePath {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct NodePathAbs(Box<Utf8Path>);
 
 path_newtype!(NodePathAbs);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, Hash)]
 pub struct NodePathRel(Arc<Utf8Path>);
 
 path_newtype!(NodePathRel);
 
-impl AsMemoryMapKey for NodePathRel {
-    fn as_memory_map_key(&self) -> &Utf8Path {
+impl ArenaPath for NodePathRel {
+    fn arena_path(&self) -> &Utf8Path {
         self
     }
 }
