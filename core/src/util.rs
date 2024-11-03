@@ -6,32 +6,7 @@ use futures::{
 };
 use std::future::Future;
 
-#[allow(unused)]
-pub trait WalkDir: Stream<Item = Utf8PathBuf> + Send + 'static {
-    fn files(self) -> impl WalkDir;
-    fn dirs(self) -> impl WalkDir;
-}
-
-impl<S> WalkDir for S
-where
-    S: Stream<Item = Utf8PathBuf> + Send + 'static,
-{
-    fn files(self) -> impl WalkDir {
-        self.filter(|p| {
-            let is_file = p.is_file();
-            async move { is_file }
-        })
-    }
-
-    fn dirs(self) -> impl WalkDir {
-        self.filter(|p| {
-            let is_dir = p.is_dir();
-            async move { is_dir }
-        })
-    }
-}
-
-pub fn walk_dir(path: &Utf8Path) -> impl WalkDir {
+pub fn walk_dir(path: &Utf8Path) -> impl Stream<Item = Utf8PathBuf> + Send + 'static {
     async fn read(path: Utf8PathBuf, stack: &mut Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
         let Ok(mut dir) = tokio::fs::read_dir(&path).await else {
             return Vec::new();
@@ -70,7 +45,10 @@ pub async fn walk_dir_and_read(
     path: &Utf8Path,
 ) -> FuturesUnordered<impl Future<Output = Result<(Utf8PathBuf, String)>>> {
     walk_dir(path)
-        .files()
+        .filter(|p| {
+            let is_file = p.is_file();
+            async move { is_file }
+        })
         .map(|path| async move {
             let text = read_to_string(&path).await?;
             anyhow::Ok((path, text))

@@ -28,7 +28,7 @@ impl Node {
 
         let data = kind.create(&path, text)?;
         let name = data.name();
-        let deps = data.dependency_refs();
+        let deps = data.deps();
 
         tracing::debug!(%name, %path, "node");
 
@@ -73,9 +73,9 @@ impl NodeDataTrait for NodeData {
         }
     }
 
-    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>> {
+    fn deps(&self) -> Option<Arc<[DependencyRef]>> {
         match self {
-            Self::Document(d) => d.dependency_refs(),
+            Self::Document(d) => d.deps(),
         }
     }
 }
@@ -113,5 +113,5 @@ impl NodeDataKind {
 
 pub(crate) trait NodeDataTrait {
     fn name(&self) -> Arc<str>;
-    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>>;
+    fn deps(&self) -> Option<Arc<[DependencyRef]>>;
 }

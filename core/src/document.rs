@@ -42,7 +42,7 @@ impl NodeDataTrait for Document {
         self.head.name.clone()
     }
 
-    fn dependency_refs(&self) -> Option<Arc<[DependencyRef]>> {
+    fn deps(&self) -> Option<Arc<[DependencyRef]>> {
         self.head.deps.clone()
     }
 }
