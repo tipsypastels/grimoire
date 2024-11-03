@@ -4,10 +4,11 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::get,
-    Router,
+    Json, Router,
 };
 use camino::Utf8PathBuf;
-use grimoire::Grimoire;
+use grimoire::{Dependencies, Grimoire, Node, Page};
+use serde::Serialize;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
@@ -20,7 +21,7 @@ pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
     let app = App { grimoire };
     let router = Router::new()
         .route("/", get(index))
-        .route("/:path", get(path))
+        .route("/:page", get(page))
         .with_state(app);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -36,11 +37,23 @@ async fn index() -> &'static str {
     "Hello, world!"
 }
 
-async fn path(State(app): State<App>, Path(path): Path<Utf8PathBuf>) -> Response {
-    let Some(node) = app.grimoire.get(&path).await else {
+async fn page(State(app): State<App>, Path(page): Path<Utf8PathBuf>) -> Response {
+    #[derive(Serialize)]
+    struct PageJson<'a> {
+        node: &'a Node,
+        deps: Option<&'a Dependencies<Page<'a>>>,
+    }
+
+    let grimoire = &app.grimoire;
+    let Some(node) = grimoire.get(page).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
-    dbg!(node);
 
-    "Hello, world".into_response()
+    let deps = grimoire.deps(&node).await;
+    let json = PageJson {
+        node: &node,
+        deps: deps.as_ref(),
+    };
+
+    Json(json).into_response()
 }

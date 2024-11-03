@@ -9,7 +9,7 @@ arc-swap = { version = "1.7.1", features = ["serde"] }
 camino.workspace = true
 futures.workspace = true
 gray_matter = "0.2.8"
-hashbrown = "0.15.0"
+hashbrown = { version = "0.15.0", features = ["serde"] }
 id-arena = "2.2.1"
 mdxjs = "0.2.11"
 serde.workspace = true

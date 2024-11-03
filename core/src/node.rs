@@ -12,10 +12,10 @@ use std::sync::Arc;
 
 #[derive(Debug, Serialize)]
 pub struct Node {
-    pub path: NodePath,
-    name: ArcSwap<Arc<str>>,
-    deps: ArcSwapOption<Arc<[Dependency]>>,
-    kind: NodeDataKind,
+    pub(crate) path: NodePath,
+    pub(crate) name: ArcSwap<Arc<str>>,
+    pub(crate) deps: ArcSwapOption<Arc<[Dependency]>>,
+    pub(crate) kind: NodeDataKind,
 }
 
 impl Node {
@@ -94,7 +94,6 @@ impl NodeDataKind {
                     )*
                 }
             };
-
         }
 
         match_kind! {
