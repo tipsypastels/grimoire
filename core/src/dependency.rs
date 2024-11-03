@@ -4,16 +4,16 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use camino::Utf8Path;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::sync::OnceLock;
 
 #[derive(Debug)]
-pub struct DependencyRef {
+pub struct Dependency {
     rel: Box<Utf8Path>,
     id: OnceLock<Id>,
 }
 
-impl DependencyRef {
+impl Dependency {
     pub fn hydrate(&self, from: &NodePath, path_map: &ArenaPaths) -> Result<()> {
         let to = from.dependency(&self.rel)?;
         let id = path_map
@@ -27,7 +27,13 @@ impl DependencyRef {
     }
 }
 
-impl<'de> Deserialize<'de> for DependencyRef {
+impl Serialize for Dependency {
+    fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+        self.rel.serialize(ser)
+    }
+}
+
+impl<'de> Deserialize<'de> for Dependency {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         Ok(Self {
             rel: Box::<Utf8Path>::deserialize(de)?,

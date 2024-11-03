@@ -1,4 +1,4 @@
-use crate::{dependency::DependencyRef, path::NodePath, NodeDataTrait};
+use crate::{dependency::Dependency, path::NodePath, NodeDataTrait};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -13,8 +13,8 @@ pub struct Document {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DocumentHead {
     pub name: Arc<str>,
-    #[serde(default, skip_serializing)]
-    pub(crate) deps: Option<Arc<[DependencyRef]>>,
+    #[serde(default)]
+    pub(crate) deps: Option<Arc<[Dependency]>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +42,7 @@ impl NodeDataTrait for Document {
         self.head.name.clone()
     }
 
-    fn deps(&self) -> Option<Arc<[DependencyRef]>> {
+    fn deps(&self) -> Option<Arc<[Dependency]>> {
         self.head.deps.clone()
     }
 }

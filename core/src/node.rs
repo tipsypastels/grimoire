@@ -1,6 +1,6 @@
 use crate::{
     arena::ArenaPaths,
-    dependency::DependencyRef,
+    dependency::Dependency,
     document::Document,
     path::{NodePath, RootPath},
 };
@@ -14,8 +14,7 @@ use std::sync::Arc;
 pub struct Node {
     pub path: NodePath,
     name: ArcSwap<Arc<str>>,
-    #[serde(skip_serializing)]
-    deps: ArcSwapOption<Arc<[DependencyRef]>>,
+    deps: ArcSwapOption<Arc<[Dependency]>>,
     kind: NodeDataKind,
 }
 
@@ -73,7 +72,7 @@ impl NodeDataTrait for NodeData {
         }
     }
 
-    fn deps(&self) -> Option<Arc<[DependencyRef]>> {
+    fn deps(&self) -> Option<Arc<[Dependency]>> {
         match self {
             Self::Document(d) => d.deps(),
         }
@@ -113,5 +112,5 @@ impl NodeDataKind {
 
 pub(crate) trait NodeDataTrait {
     fn name(&self) -> Arc<str>;
-    fn deps(&self) -> Option<Arc<[DependencyRef]>>;
+    fn deps(&self) -> Option<Arc<[Dependency]>>;
 }
