@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 axum = "0.7.7"
+camino.workspace = true
 grimoire = { path = "../core" }
 serde.workspace = true
 tokio.workspace = true
