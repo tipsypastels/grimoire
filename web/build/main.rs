@@ -1,10 +1,12 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use std::env;
+use tokio::try_join;
 
 mod artifact;
 mod binary;
-mod tailwind;
+mod scripts;
+mod styles;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -13,7 +15,9 @@ async fn main() -> Result<()> {
 
     let out_dir: Utf8PathBuf = env::var("OUT_DIR").unwrap().into();
 
-    tailwind::build(&out_dir).await?;
+    let scripts = scripts::build(&out_dir);
+    let styles = styles::build(&out_dir);
 
+    try_join!(scripts, styles)?;
     Ok(())
 }

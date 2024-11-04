@@ -4,9 +4,13 @@ use axum::{
     routing::get,
     Router,
 };
+use tower_http::services::ServeDir;
 
 pub fn router() -> Router<App> {
-    Router::new().route("/tailwind.css", get(tailwind_css))
+    let js = ServeDir::new(concat!(env!("OUT_DIR"), "/js"));
+    Router::new()
+        .route("/tailwind.css", get(tailwind_css))
+        .fallback_service(js)
 }
 
 async fn tailwind_css() -> ([(HeaderName, &'static str); 1], &'static str) {
