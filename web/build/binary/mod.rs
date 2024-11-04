@@ -14,14 +14,11 @@ mod unpack;
 mod unzip;
 
 pub async fn init() -> Result<()> {
-    let tailwind = TAILWIND.state().await?;
-    let esbuild = ESBUILD.state().await?;
-    let pnpm = PNPM.state().await?;
+    let tailwind = TAILWIND.state();
+    let esbuild = ESBUILD.state();
+    let pnpm = PNPM.state();
 
-    if tailwind || esbuild || pnpm {
-        tracing::info!("binary installation complete")
-    }
-
+    tokio::try_join!(tailwind, esbuild, pnpm)?;
     Ok(())
 }
 
@@ -96,8 +93,6 @@ impl<P: Unpack, Z: Unzip> Source<P, Z> {
             self.download(&path)
                 .await
                 .with_context(|| format!("failed to download {} binary", self.name))?;
-
-            tracing::info!(binary = self.name, %path, "installed");
         }
         Ok(Box::from(path))
     }
@@ -105,8 +100,6 @@ impl<P: Unpack, Z: Unzip> Source<P, Z> {
     async fn download(&self, path: &Utf8Path) -> Result<()> {
         let client = reqwest::Client::new();
         let url = self.url()?;
-
-        tracing::info!(binary = self.name, "downloading");
 
         let res = client.get(url).send().await?;
         let res = res.error_for_status()?;

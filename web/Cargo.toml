@@ -2,6 +2,7 @@
 name = "grimoire-web"
 version = "0.1.0"
 edition = "2021"
+build = "build/main.rs"
 
 [dependencies]
 anyhow.workspace = true
@@ -20,4 +21,17 @@ serde.workspace = true
 tar = "0.4.43"
 tokio.workspace = true
 tracing.workspace = true
+url = "2.5.3"
+
+[build-dependencies]
+anyhow.workspace = true
+bytes = "1.8.0"
+camino.workspace = true
+directories = "5.0.1"
+flate2 = "1.0.34"
+flume = "0.11.1"
+futures.workspace = true
+reqwest = { version = "0.12.9", features = ["stream"] }
+tar = "0.4.43"
+tokio.workspace = true
 url = "2.5.3"

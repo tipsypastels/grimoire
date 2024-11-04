@@ -5,15 +5,10 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 mod app;
-mod artifact;
-mod binary;
 mod grimoire;
 mod routes;
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
-    artifact::init().await?;
-    binary::init().await?;
-
     let app = App::new(grimoire);
     let router = routes::router(app);
 
