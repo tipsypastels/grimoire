@@ -1,78 +1,75 @@
-use self::{arena::Arena, path::RootPath};
-use anyhow::Result;
+use self::{index::Index, path::RootPath};
+use anyhow::{Context, Result};
 use camino::Utf8Path;
-use futures::{stream, StreamExt};
-use std::{ops::Deref, sync::Arc};
-use tokio::sync::{RwLock, RwLockReadGuard as RG};
+use futures::StreamExt;
+use id_arena::Arena;
+use std::sync::Arc;
 
-mod arena;
 mod dependency;
 mod document;
+mod index;
 mod node;
 mod path;
 mod util;
 
 pub use self::{dependency::*, document::*, node::*};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Grimoire {
     root: RootPath,
-    arena: Arc<RwLock<Arena>>,
+    arena: Arena<Node>,
+    index: Index,
 }
 
 impl Grimoire {
-    pub async fn new(root: Arc<Utf8Path>) -> Result<Self> {
+    pub fn new(root: Arc<Utf8Path>) -> Self {
         let root = RootPath::new(root);
-        let mut arena = Arena::default();
-
-        arena.load_all(&root).await?;
-        arena.hydrate_all()?;
-
-        let arena = Arc::new(RwLock::new(arena));
-        Ok(Self { root, arena })
+        let arena = Arena::default();
+        let index = Index::default();
+        Self { root, arena, index }
     }
 
-    pub async fn get(&self, path: impl AsRef<Utf8Path>) -> Option<Page<'_>> {
-        RG::try_map(self.arena.read().await, |arena| {
-            arena.get(arena.get_id(arena::AsArenaPath::new(path.as_ref()))?)
-        })
-        .map(Page)
-        .ok()
+    pub fn get(&self, path: impl AsRef<Utf8Path>) -> Option<&Node> {
+        let path = index::AsIndexPath::new(path.as_ref());
+        let id = self.index.get(path)?;
+        self.arena.get(id)
     }
 
-    pub async fn deps(&self, node: &Node) -> Option<Dependencies<Page<'_>>> {
+    pub fn deps(&self, node: &Node) -> Option<Dependencies<'_>> {
         let deps = node.deps.load();
         let deps = deps.as_deref()?;
-        let deps = stream::iter(deps.iter())
-            .filter_map(|dep| async move {
-                let arena = self.arena.read().await;
-                let node = RG::try_map(arena, |arena| arena.get(dep.id())).ok()?;
-                Some((node.path.rel.clone(), Page(node)))
-            })
-            .collect()
-            .await;
+        let deps = deps.iter().filter_map(|dep| {
+            let node = self.arena.get(dep.id())?;
+            Some((node.path.rel.clone(), node))
+        });
 
-        Some(deps)
+        Some(Dependencies(deps.collect()))
+    }
+
+    pub fn insert(&mut self, node: Node) {
+        let path = node.path.rel.clone();
+        let id = self.arena.alloc(node);
+        self.index.insert(path, id);
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub async fn load_all(&mut self) -> Result<()> {
+        let mut stream = util::walk_dir_and_read(&self.root).await;
+        while let Some(result) = stream.next().await {
+            let (path, ref text) = result?;
+            if let Some(node) = Node::new(self.root.clone(), path.into(), text).await? {
+                self.insert(node);
+            };
+        }
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub fn hydrate_all(&self) -> Result<()> {
+        for (_, node) in self.arena.iter() {
+            node.hydrate(&self.index)
+                .with_context(|| format!("failed to hydrate {}", node.path))?;
+        }
+        Ok(())
     }
 }
-
-#[derive(Debug)]
-pub struct Page<'a>(RG<'a, Node>);
-
-impl Deref for Page<'_> {
-    type Target = Node;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-// pub struct DependenciesPage<'a>(HashMap<NodePathRel, Page<'a>>);
-
-// impl<'a> Deref for DependenciesPage<'a> {
-//     type Target = HashMap<NodePathRel, Page<'a>>;
-
-//     fn deref(&self) -> &Self::Target {
-//         &self.0
-//     }
-// }

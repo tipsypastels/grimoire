@@ -1,58 +1,31 @@
 use crate::{
-    arena::{ArenaPaths, Id},
+    index::Index,
+    node::{Node, NodeId},
     path::{NodePath, NodePathRel},
 };
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use hashbrown::HashMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::{ops::Deref, sync::OnceLock};
+use std::sync::OnceLock;
 
-#[derive(Debug)]
-pub struct Dependencies<N>(HashMap<NodePathRel, N>);
-
-impl<N> Default for Dependencies<N> {
-    fn default() -> Self {
-        Self(Default::default())
-    }
-}
-
-impl<N> FromIterator<(NodePathRel, N)> for Dependencies<N> {
-    fn from_iter<T: IntoIterator<Item = (NodePathRel, N)>>(iter: T) -> Self {
-        Self(HashMap::from_iter(iter))
-    }
-}
-
-impl<N> Extend<(NodePathRel, N)> for Dependencies<N> {
-    fn extend<T: IntoIterator<Item = (NodePathRel, N)>>(&mut self, iter: T) {
-        self.0.extend(iter)
-    }
-}
-
-// Can't serialize RwLockReadGuard directly.
-impl<N> Serialize for Dependencies<N>
-where
-    N: Deref<Target: Serialize>,
-{
-    fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-        ser.collect_map(self.0.iter().map(|(k, v)| (k, v.deref())))
-    }
-}
+#[derive(Debug, Default, Serialize)]
+pub struct Dependencies<'a>(pub(crate) HashMap<NodePathRel, &'a Node>);
 
 #[derive(Debug)]
 pub(crate) struct Dependency {
     rel: Box<Utf8Path>,
-    id: OnceLock<Id>,
+    id: OnceLock<NodeId>,
 }
 
 impl Dependency {
-    pub fn id(&self) -> Id {
+    pub fn id(&self) -> NodeId {
         *self.id.get().expect("got unhydrated dependency id")
     }
 
-    pub fn hydrate(&self, from: &NodePath, path_map: &ArenaPaths) -> Result<()> {
+    pub fn hydrate(&self, from: &NodePath, index: &Index) -> Result<()> {
         let to = from.dependency(&self.rel)?;
-        let id = path_map
+        let id = index
             .get(&to)
             .with_context(|| format!("unknown dependency {from}->{to}"))?;
 

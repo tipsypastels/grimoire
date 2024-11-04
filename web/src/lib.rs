@@ -7,18 +7,20 @@ use axum::{
     Json, Router,
 };
 use camino::Utf8PathBuf;
-use grimoire::{Dependencies, Grimoire, Node, Page};
+use grimoire::{Dependencies, Grimoire, Node};
 use serde::Serialize;
-use std::net::SocketAddr;
-use tokio::net::TcpListener;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::{net::TcpListener, sync::RwLock};
 
 #[derive(Debug, Clone)]
 struct App {
-    grimoire: Grimoire,
+    grimoire: Arc<RwLock<Grimoire>>,
 }
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
-    let app = App { grimoire };
+    let app = App {
+        grimoire: Arc::new(RwLock::new(grimoire)),
+    };
     let router = Router::new()
         .route("/", get(index))
         .route("/:page", get(page))
@@ -41,17 +43,17 @@ async fn page(State(app): State<App>, Path(page): Path<Utf8PathBuf>) -> Response
     #[derive(Serialize)]
     struct PageJson<'a> {
         node: &'a Node,
-        deps: Option<&'a Dependencies<Page<'a>>>,
+        deps: Option<&'a Dependencies<'a>>,
     }
 
-    let grimoire = &app.grimoire;
-    let Some(node) = grimoire.get(page).await else {
+    let grimoire = app.grimoire.read().await;
+    let Some(node) = grimoire.get(page) else {
         return StatusCode::NOT_FOUND.into_response();
     };
 
-    let deps = grimoire.deps(&node).await;
+    let deps = grimoire.deps(node);
     let json = PageJson {
-        node: &node,
+        node,
         deps: deps.as_ref(),
     };
 

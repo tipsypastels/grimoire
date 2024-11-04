@@ -1,14 +1,17 @@
 use crate::{
-    arena::ArenaPaths,
     dependency::Dependency,
     document::Document,
+    index::Index,
     path::{NodePath, RootPath},
 };
 use anyhow::{Context, Result};
 use arc_swap::{ArcSwap, ArcSwapOption};
 use camino::Utf8Path;
+use id_arena::Id;
 use serde::Serialize;
 use std::sync::Arc;
+
+pub(crate) type NodeId = Id<Node>;
 
 #[derive(Debug, Serialize)]
 pub struct Node {
@@ -19,7 +22,11 @@ pub struct Node {
 }
 
 impl Node {
-    pub async fn new(root: RootPath, path: Box<Utf8Path>, text: &str) -> Result<Option<Self>> {
+    pub(crate) async fn new(
+        root: RootPath,
+        path: Box<Utf8Path>,
+        text: &str,
+    ) -> Result<Option<Self>> {
         let path = NodePath::new(root, path)?;
         let Some(kind) = NodeDataKind::determine(path.extension()) else {
             return Ok(None);
@@ -42,13 +49,13 @@ impl Node {
         }))
     }
 
-    pub fn hydrate(&self, path_map: &ArenaPaths) -> Result<()> {
+    pub(crate) fn hydrate(&self, index: &Index) -> Result<()> {
         let deps = self.deps.load();
         let Some(deps) = deps.as_deref() else {
             return Ok(());
         };
         for dep in deps.as_ref() {
-            dep.hydrate(&self.path, path_map)?;
+            dep.hydrate(&self.path, index)?;
         }
         Ok(())
     }

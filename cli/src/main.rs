@@ -31,7 +31,10 @@ async fn main() -> Result<()> {
 
     tracing::debug!(dir = %root, "reading");
 
-    let grimoire = Grimoire::new(root.into()).await?;
+    let mut grimoire = Grimoire::new(root.into());
+
+    grimoire.load_all().await?;
+    grimoire.hydrate_all()?;
 
     grimoire_web::serve(grimoire, opts.port).await
 }

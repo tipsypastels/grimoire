@@ -1,4 +1,4 @@
-use crate::arena::ArenaPath;
+use crate::index::IndexPath;
 use anyhow::{Context, Result};
 use camino::Utf8Path;
 use serde::Serialize;
@@ -94,9 +94,9 @@ impl NodePath {
     }
 }
 
-impl ArenaPath for NodePath {
-    fn arena_path(&self) -> &Utf8Path {
-        self.rel.arena_path()
+impl IndexPath for NodePath {
+    fn index_path(&self) -> &Utf8Path {
+        self.rel.index_path()
     }
 }
 
@@ -116,8 +116,8 @@ pub struct NodePathRel(Arc<Utf8Path>);
 
 path_newtype!(NodePathRel);
 
-impl ArenaPath for NodePathRel {
-    fn arena_path(&self) -> &Utf8Path {
+impl IndexPath for NodePathRel {
+    fn index_path(&self) -> &Utf8Path {
         self
     }
 }
