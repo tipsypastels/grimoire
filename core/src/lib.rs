@@ -64,8 +64,9 @@ impl Grimoire {
         Ok(())
     }
 
+    // Doesn't actually need &mut, but more semantically correct.
     #[tracing::instrument(skip_all)]
-    pub fn hydrate_all(&self) -> Result<()> {
+    pub fn hydrate_all(&mut self) -> Result<()> {
         for (_, node) in self.arena.iter() {
             node.hydrate(&self.index)
                 .with_context(|| format!("failed to hydrate {}", node.path))?;
