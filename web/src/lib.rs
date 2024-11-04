@@ -7,7 +7,7 @@ use axum::{
     Json, Router,
 };
 use camino::Utf8PathBuf;
-use grimoire::{Dependencies, Grimoire, Node};
+use grimoire::{Dependencies, Grimoire, Node, NodeContent};
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, sync::RwLock};
@@ -43,6 +43,7 @@ async fn page(State(app): State<App>, Path(page): Path<Utf8PathBuf>) -> Response
     #[derive(Serialize)]
     struct PageJson<'a> {
         node: &'a Node,
+        cont: NodeContent,
         deps: Option<&'a Dependencies<'a>>,
     }
 
@@ -50,10 +51,14 @@ async fn page(State(app): State<App>, Path(page): Path<Utf8PathBuf>) -> Response
     let Some(node) = grimoire.get(page) else {
         return StatusCode::NOT_FOUND.into_response();
     };
+    let Ok(cont) = node.read().await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
 
     let deps = grimoire.deps(node);
     let json = PageJson {
         node,
+        cont,
         deps: deps.as_ref(),
     };
 

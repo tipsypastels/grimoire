@@ -3,6 +3,7 @@ use crate::{
     document::Document,
     index::Index,
     path::{NodePath, RootPath},
+    util,
 };
 use anyhow::{Context, Result};
 use arc_swap::{ArcSwap, ArcSwapOption};
@@ -59,15 +60,23 @@ impl Node {
         }
         Ok(())
     }
+
+    pub async fn read(&self) -> Result<NodeContent> {
+        let text = util::read_to_string(&self.path.abs).await?;
+        let data = self.kind.create(&self.path, &text)?;
+        Ok(NodeContent { text, data })
+    }
 }
 
 #[derive(Debug, Serialize)]
+#[non_exhaustive]
 pub struct NodeContent {
-    pub text: Box<str>,
+    pub text: String,
     pub data: NodeData,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(tag = "kind")]
 pub enum NodeData {
     Document(Document),
 }
