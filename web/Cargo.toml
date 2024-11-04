@@ -7,7 +7,7 @@ edition = "2021"
 anyhow.workspace = true
 axum = "0.7.7"
 camino.workspace = true
-grimoire = { path = "../core" }
+grimoire-lib = { package = "grimoire", path = "../core" }
 serde.workspace = true
 tokio.workspace = true
 tracing.workspace = true

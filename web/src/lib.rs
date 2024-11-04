@@ -1,30 +1,16 @@
+use self::app::App;
 use anyhow::Result;
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::get,
-    Json, Router,
-};
-use camino::Utf8PathBuf;
-use grimoire::{Dependencies, Grimoire, Node, NodeContent};
-use serde::Serialize;
-use std::{net::SocketAddr, sync::Arc};
-use tokio::{net::TcpListener, sync::RwLock};
+use grimoire_lib::Grimoire;
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
 
-#[derive(Debug, Clone)]
-struct App {
-    grimoire: Arc<RwLock<Grimoire>>,
-}
+mod app;
+mod grimoire;
+mod routes;
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
-    let app = App {
-        grimoire: Arc::new(RwLock::new(grimoire)),
-    };
-    let router = Router::new()
-        .route("/", get(index))
-        .route("/:page", get(page))
-        .with_state(app);
+    let app = App::new(grimoire);
+    let router = routes::router(app);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let listener = TcpListener::bind(addr).await?;
@@ -33,34 +19,4 @@ pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
     axum::serve(listener, router).await?;
 
     Ok(())
-}
-
-async fn index() -> &'static str {
-    "Hello, world!"
-}
-
-async fn page(State(app): State<App>, Path(page): Path<Utf8PathBuf>) -> Response {
-    #[derive(Serialize)]
-    struct PageJson<'a> {
-        node: &'a Node,
-        cont: NodeContent,
-        deps: Option<&'a Dependencies<'a>>,
-    }
-
-    let grimoire = app.grimoire.read().await;
-    let Some(node) = grimoire.get(page) else {
-        return StatusCode::NOT_FOUND.into_response();
-    };
-    let Ok(cont) = node.read().await else {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    };
-
-    let deps = grimoire.deps(node);
-    let json = PageJson {
-        node,
-        cont,
-        deps: deps.as_ref(),
-    };
-
-    Json(json).into_response()
 }
