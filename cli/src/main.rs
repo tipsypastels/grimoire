@@ -33,8 +33,8 @@ async fn main() -> Result<()> {
 
     let mut grimoire = Grimoire::new(root.into());
 
-    grimoire.load_all().await?;
-    grimoire.hydrate_all()?;
+    grimoire.populate().await?;
+    grimoire.hydrate()?;
 
     grimoire_web::serve(grimoire, opts.port).await
 }
