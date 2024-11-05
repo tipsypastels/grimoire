@@ -8,6 +8,15 @@
     <script defer src="/fa/fontawesome.js"></script>
     <script defer src="/fa/solid.js"></script>
 
+    <script>
+      document.documentElement.classList.toggle(
+        "dark",
+        localStorage.theme === "dark" ||
+          (!("theme" in localStorage) &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches),
+      );
+    </script>
+
     <script src="/js/base.js"></script>
     {% block head %}
     {% endblock %}
