@@ -8,7 +8,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(grimoire: grimoire_lib::Grimoire) -> Self {
+    pub fn new(grimoire: grimoire_core::Grimoire) -> Self {
         let grimoire = Grimoire::new(grimoire);
         Self { grimoire }
     }

@@ -833,6 +833,22 @@ name = "grimoire"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "camino",
+ "clap",
+ "dotenvy",
+ "grimoire-core",
+ "grimoire-web",
+ "serde",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "grimoire-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "arc-swap",
  "camino",
  "futures",
@@ -844,22 +860,6 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "grimoire-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "camino",
- "clap",
- "dotenvy",
- "grimoire",
- "grimoire-web",
- "serde",
- "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -876,7 +876,7 @@ dependencies = [
  "flate2",
  "flume",
  "futures",
- "grimoire",
+ "grimoire-core",
  "reqwest",
  "serde",
  "tar",

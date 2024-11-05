@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use dotenvy::dotenv;
-use grimoire::Grimoire;
+use grimoire_core::Grimoire;
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 

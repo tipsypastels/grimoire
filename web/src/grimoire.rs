@@ -1,27 +1,27 @@
-use grimoire_lib::Grimoire as Inner;
+use grimoire_core::Grimoire as Core;
 use std::sync::Arc;
 use tokio::sync::{self, RwLock};
 
-pub type Page<'a> = sync::RwLockReadGuard<'a, Inner>;
-pub type PageMut<'a> = sync::RwLockWriteGuard<'a, Inner>;
+pub type Page<'a> = sync::RwLockReadGuard<'a, Core>;
+pub type PageMut<'a> = sync::RwLockWriteGuard<'a, Core>;
 
 #[derive(Debug, Clone)]
 pub struct Grimoire {
-    inner: Arc<RwLock<Inner>>,
+    core: Arc<RwLock<Core>>,
 }
 
 impl Grimoire {
-    pub fn new(inner: Inner) -> Self {
+    pub fn new(core: Core) -> Self {
         Self {
-            inner: Arc::new(RwLock::new(inner)),
+            core: Arc::new(RwLock::new(core)),
         }
     }
 
     pub async fn read(&self) -> Page<'_> {
-        self.inner.read().await
+        self.core.read().await
     }
 
     pub async fn write(&self) -> PageMut<'_> {
-        self.inner.write().await
+        self.core.write().await
     }
 }

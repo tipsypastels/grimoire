@@ -1,6 +1,6 @@
 use self::app::App;
 use anyhow::Result;
-use grimoire_lib::Grimoire;
+use grimoire_core::Grimoire;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
