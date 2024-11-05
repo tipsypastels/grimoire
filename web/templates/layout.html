@@ -24,9 +24,19 @@
     <title>{% block title %}{% endblock %}</title>
   </head>
   <body>
-    <div id="content">
-      {% block content %}
-      {% endblock %}
+    <div class="grid min-h-[100vh] grid-cols-12 gap-4">
+      <aside class="col-span-3 p-4">
+        {% block aside %}
+          Sidebar
+        {% endblock %}
+      </aside>
+
+      <main class="col-span-9 p-4">
+        <div class="h-full border-2 border-solid border-slate-800 p-8">
+          {% block content %}
+          {% endblock %}
+        </div>
+      </main>
     </div>
   </body>
 </html>
