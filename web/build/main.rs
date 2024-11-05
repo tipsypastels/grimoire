@@ -5,6 +5,7 @@ use tokio::try_join;
 
 mod artifact;
 mod binary;
+mod public;
 mod scripts;
 mod styles;
 
@@ -14,10 +15,12 @@ async fn main() -> Result<()> {
     binary::init().await?;
 
     let out_dir: Utf8PathBuf = env::var("OUT_DIR").unwrap().into();
+    let public_dir = out_dir.join("public");
 
-    let scripts = scripts::build(&out_dir);
-    let styles = styles::build(&out_dir);
+    let public = public::build(&public_dir);
+    let scripts = scripts::build(&public_dir);
+    let styles = styles::build(&public_dir);
 
-    try_join!(scripts, styles)?;
+    try_join!(public, scripts, styles)?;
     Ok(())
 }
