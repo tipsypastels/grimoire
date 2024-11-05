@@ -6,13 +6,14 @@
     <link rel="stylesheet" href="/tailwind.css" />
 
     <script src="/base.js"></script>
+    {% block head %}
+    {% endblock %}
 
     <title>{% block title %}{% endblock %}</title>
   </head>
   <body>
     <div id="content">
       {% block content %}
-        <p>Placeholder content</p>
       {% endblock %}
     </div>
   </body>
