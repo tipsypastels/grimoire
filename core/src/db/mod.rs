@@ -44,23 +44,24 @@ impl Db {
         query_as(r#"SELECT * FROM nodes"#).fetch(&self.pool)
     }
 
-    pub async fn insert_node(&self, node: DbNewNode<'_>) -> Result<()> {
-        query(r#"INSERT INTO nodes (path, name, kind, text) VALUES (?1, ?2, ?3, ?4)"#)
+    pub async fn insert_node(&self, node: DbNewNode<'_>) -> Result<i64> {
+        let res = query(r#"INSERT INTO nodes (path, name, kind, text) VALUES (?1, ?2, ?3, ?4)"#)
             .bind(node.path)
             .bind(node.name)
             .bind(node.kind)
             .bind(node.text)
             .execute(&self.pool)
             .await?;
-        Ok(())
+        Ok(res.last_insert_rowid())
     }
 
-    pub async fn insert_node_reference(&self, referrer: i32, referrent: i32) -> Result<()> {
-        query(r#"INSERT INTO node_references (referrer_id, referrent_id) VALUES (?1, ?2)"#)
-            .bind(referrer)
-            .bind(referrent)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
+    pub async fn insert_node_reference(&self, referrer: i32, referrent: i32) -> Result<i64> {
+        let res =
+            query(r#"INSERT INTO node_references (referrer_id, referrent_id) VALUES (?1, ?2)"#)
+                .bind(referrer)
+                .bind(referrent)
+                .execute(&self.pool)
+                .await?;
+        Ok(res.last_insert_rowid())
     }
 }

@@ -10,7 +10,7 @@ pub use path::*;
 
 #[derive(Debug)]
 pub struct Node {
-    pub(crate) id: i32,
+    pub(crate) id: i64,
     path: NodePath,
     data: NodeData,
 }
@@ -39,7 +39,7 @@ impl Node {
 
 #[derive(Debug)]
 pub struct NodeHead {
-    pub(crate) id: i32,
+    pub(crate) id: i64,
     path: NodePath,
     name: Box<str>,
     kind: NodeKind,

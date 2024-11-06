@@ -3,7 +3,7 @@ use sqlx::{error::BoxDynError, prelude::FromRow, Database, Decode, Result, Sqlit
 
 #[derive(FromRow)]
 pub struct DbNode {
-    pub id: i32,
+    pub id: i64,
     pub path: DbNodePath,
     pub name: Box<str>,
     pub kind: Box<str>,
@@ -45,14 +45,14 @@ impl<'a> From<crate::node::NewNode<'a>> for DbNewNode<'a> {
 
 #[derive(FromRow)]
 pub struct DbNodeTag {
-    pub id: i32,
-    pub node_id: i32,
+    pub id: i64,
+    pub node_id: i64,
     pub tag: Box<str>,
 }
 
 #[derive(FromRow)]
 pub struct DbNodeReference {
-    pub id: i32,
-    pub referrer_id: i32,
-    pub referrent_id: i32,
+    pub id: i64,
+    pub referrer_id: i64,
+    pub referrent_id: i64,
 }
