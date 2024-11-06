@@ -1,8 +1,9 @@
-use crate::node::NodePathRel;
-use futures::{stream::BoxStream, Stream};
-use sqlx::{
-    migrate, prelude::FromRow, query, query_as, sqlite::SqlitePoolOptions, Result, SqlitePool,
-};
+use futures::stream::BoxStream;
+use sqlx::{migrate, query, query_as, sqlite::SqlitePoolOptions, Result, SqlitePool};
+
+mod types;
+
+pub use types::*;
 
 #[derive(Debug, Clone)]
 pub struct Db {
@@ -62,45 +63,4 @@ impl Db {
             .await?;
         Ok(())
     }
-}
-
-#[derive(FromRow)]
-pub struct DbNode {
-    pub id: i32,
-    pub path: NodePathRel,
-    pub name: Box<str>,
-    pub kind: Box<str>,
-    pub text: Box<str>,
-}
-
-pub struct DbNewNode<'a> {
-    pub path: &'a NodePathRel,
-    pub name: &'a str,
-    pub kind: &'a str,
-    pub text: &'a str,
-}
-
-impl<'a> From<crate::node::NewNode<'a>> for DbNewNode<'a> {
-    fn from(node: crate::node::NewNode<'a>) -> Self {
-        Self {
-            path: node.path.rel(),
-            name: node.data.name(),
-            kind: node.data.kind().as_str(),
-            text: node.data.text(),
-        }
-    }
-}
-
-#[derive(FromRow)]
-pub struct DbNodeTag {
-    pub id: i32,
-    pub node_id: i32,
-    pub tag: Box<str>,
-}
-
-#[derive(FromRow)]
-pub struct DbNodeReference {
-    pub id: i32,
-    pub referrer_id: i32,
-    pub referrent_id: i32,
 }
