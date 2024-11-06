@@ -16,8 +16,6 @@ pub async fn get(
 ) -> ServeResult<PageTemplate> {
     let node = grimoire.get(&path).await?;
     let node = node.or_not_found()?;
-    let t = PageTemplate { globals, node };
-    dbg!(t.to_string());
 
-    Ok(t)
+    Ok(PageTemplate { globals, node })
 }

@@ -14,7 +14,8 @@ futures.workspace = true
 grimoire-core = { path = "../core" }
 serde.workspace = true
 tokio.workspace = true
-tower-http = { version = "0.6.1", features = ["fs"] }
+tower = "0.5.1"
+tower-http = { version = "0.6.1", features = ["fs", "trace"] }
 tracing.workspace = true
 
 [build-dependencies]

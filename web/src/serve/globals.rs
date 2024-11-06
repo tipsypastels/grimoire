@@ -17,7 +17,7 @@ impl FromRequestParts<App> for Globals {
 
     async fn from_request_parts(parts: &mut Parts, app: &App) -> ServeResult<Self> {
         let nodes = app.grimoire.all().await?;
-        let is_turbo_frame = parts.headers.contains_key("Turbo-Frame");
+        let is_turbo_frame = super::is_turbo_frame(&parts.headers);
 
         Ok(Self {
             nodes,

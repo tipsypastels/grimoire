@@ -7,6 +7,7 @@ use tokio::net::TcpListener;
 mod app;
 mod render;
 mod routes;
+mod serve;
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
     let app = App::new(grimoire);

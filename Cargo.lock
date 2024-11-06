@@ -883,6 +883,7 @@ dependencies = [
  "serde",
  "tar",
  "tokio",
+ "tower",
  "tower-http",
  "tracing",
  "url",
