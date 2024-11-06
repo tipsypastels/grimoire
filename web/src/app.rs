@@ -1,14 +1,14 @@
-use crate::grimoire::GrimoireLock;
 use axum::{extract::FromRequestParts, http::request::Parts};
+use grimoire_core::Grimoire;
 use std::convert::Infallible;
 
 #[derive(Debug, Clone)]
 pub struct App {
-    pub grimoire: GrimoireLock,
+    pub grimoire: Grimoire,
 }
 
 impl App {
-    pub fn new(grimoire: GrimoireLock) -> Self {
+    pub fn new(grimoire: Grimoire) -> Self {
         Self { grimoire }
     }
 }
@@ -23,7 +23,7 @@ impl FromRequestParts<App> for App {
 }
 
 app_accessors! {
-    grimoire: GrimoireLock,
+    grimoire: Grimoire,
 }
 
 macro_rules! app_accessors {

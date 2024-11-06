@@ -1,20 +1,16 @@
-use crate::{
-    grimoire::GrimoireLock,
-    render::{fa, CellIter},
-};
+use crate::render::fa;
 use askama_axum::Template;
 use axum::response::{IntoResponse, Response};
-use grimoire_core::Nodes;
+use grimoire_core::{Grimoire, NodeHead};
 
-pub async fn get(grimoire: GrimoireLock) -> Response {
+pub async fn get(grimoire: Grimoire) -> Response {
     #[derive(Template)]
     #[template(path = "index.html", escape = "none")]
-    pub struct IndexHtml<'a> {
-        nodes: CellIter<Nodes<'a>>,
+    pub struct IndexHtml {
+        nodes: Vec<NodeHead>,
     }
 
-    let grimoire = grimoire.read().await;
-    let nodes = grimoire.nodes().into();
+    let nodes = grimoire.iter().await.unwrap();
     let template = IndexHtml { nodes };
 
     template.into_response()

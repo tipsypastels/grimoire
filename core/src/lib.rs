@@ -1,91 +1,76 @@
-use self::{index::Index, path::RootPath};
-use anyhow::{Context, Result};
+use self::db::Db;
+use anyhow::{Error, Result};
 use camino::Utf8Path;
-use futures::StreamExt;
-use id_arena::Arena;
+use futures::{StreamExt, TryStreamExt};
 use std::sync::Arc;
 
-mod dependency;
+mod db;
 mod document;
-mod index;
 mod node;
-mod path;
 mod util;
 
-pub use self::{dependency::*, document::*, node::*};
+pub use node::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grimoire {
-    root: RootPath,
-    arena: Arena<Node>,
-    index: Index,
+    root: Arc<Utf8Path>,
+    db: Db,
 }
 
 impl Grimoire {
-    pub fn new(root: Arc<Utf8Path>) -> Self {
-        let root = RootPath::new(root);
-        let arena = Arena::default();
-        let index = Index::default();
-        Self { root, arena, index }
+    pub async fn new(root: impl Into<Arc<Utf8Path>>) -> Result<Self> {
+        let root = root.into();
+        let db = Db::new().await?;
+
+        Ok(Self { root, db })
     }
 
-    pub fn get(&self, path: impl AsRef<Utf8Path>) -> Option<&Node> {
-        let path = index::AsIndexPath::new(path.as_ref());
-        let id = self.index.get(path)?;
-        self.arena.get(id)
+    pub async fn get(&self, path: impl AsRef<Utf8Path>) -> Result<Option<Node>> {
+        let path = path.as_ref().as_str();
+        let Some(node) = self.db.get_node_by_path(path).await? else {
+            return Ok(None);
+        };
+        Ok(Some(Node::revive(&self.root, node)?))
     }
 
-    pub fn deps(&self, node: &Node) -> Option<Dependencies<'_>> {
-        let deps = node.deps.load();
-        let deps = deps.as_deref()?;
-        let deps = deps.iter().filter_map(|dep| {
-            let node = self.arena.get(dep.id())?;
-            Some((node.path.rel.clone(), node))
-        });
-
-        Some(Dependencies(deps.collect()))
+    pub async fn iter(&self) -> Result<Vec<NodeHead>> {
+        self.db
+            .get_nodes()
+            .map_err(Error::from)
+            .and_then(|node| async move { NodeHead::revive(&self.root, node) })
+            .try_collect()
+            .await
     }
 
-    pub fn nodes(&self) -> Nodes<'_> {
-        Nodes(self.arena.iter())
+    pub async fn insert(
+        &self,
+        path: impl Into<Box<Utf8Path>>,
+        text: &str,
+    ) -> Result<Option<(NodePath, NodeData)>> {
+        let path = NodePath::new(&self.root, path.into())?;
+        let Some(kind) = NodeKind::determine(path.abs().extension()) else {
+            return Ok(None);
+        };
+        let data = kind.create(&path, text)?;
+        let node = NewNode {
+            path: &path,
+            data: &data,
+        };
+
+        tracing::info!(name = %data.name(), %path, "node");
+        self.db.insert_node(node.into()).await?;
+        Ok(Some((path, data)))
     }
 
-    pub fn insert(&mut self, node: Node) {
-        let path = node.path.rel.clone();
-        let id = self.arena.alloc(node);
-        self.index.insert(path, id);
-    }
-
-    #[tracing::instrument(skip(self))]
-    pub async fn populate(&mut self) -> Result<()> {
+    // TODO: Dependencies.
+    pub async fn populate(&self) -> Result<()> {
         let mut stream = util::walk_dir_and_read(&self.root).await;
         while let Some(result) = stream.next().await {
-            let (path, ref text) = result?;
-            if let Some(node) = Node::new(self.root.clone(), path.into(), text).await? {
-                self.insert(node);
+            let (path, text) = result?;
+            let Some((_path, _data)) = self.insert(path, &text).await? else {
+                continue;
             };
         }
         Ok(())
-    }
-
-    // Doesn't actually need &mut, but more semantically correct.
-    #[tracing::instrument(skip_all)]
-    pub fn hydrate(&mut self) -> Result<()> {
-        for (_, node) in self.arena.iter() {
-            node.hydrate(&self.index)
-                .with_context(|| format!("failed to hydrate {}", node.path))?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct Nodes<'a>(id_arena::Iter<'a, Node, id_arena::DefaultArenaBehavior<Node>>);
-
-impl<'a> Iterator for Nodes<'a> {
-    type Item = &'a Node;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(_id, node)| node)
     }
 }

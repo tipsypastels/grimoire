@@ -5,14 +5,18 @@ edition = "2021"
 
 [dependencies]
 anyhow.workspace = true
-arc-swap = { version = "1.7.1", features = ["serde"] }
 camino.workspace = true
 futures.workspace = true
 gray_matter = "0.2.8"
-hashbrown = { version = "0.15.0", features = ["serde"] }
-id-arena = "2.2.1"
-mdxjs = "0.2.11"
 serde.workspace = true
-serde_yaml = "0.9.34"
+sqlx = { version = "0.8.2", features = [
+  "runtime-tokio",
+  "tls-rustls",
+  "migrate",
+  "sqlite",
+  "uuid",
+  "chrono",
+  "json",
+] }
 tokio.workspace = true
 tracing.workspace = true

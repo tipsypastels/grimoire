@@ -1,48 +1,49 @@
-use crate::{dependency::Dependency, path::NodePath, NodeDataTrait};
+use crate::node::NodePath;
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use serde::Deserialize;
 
-#[derive(Debug, Serialize)]
-#[non_exhaustive]
+#[derive(Debug)]
 pub struct Document {
-    pub head: DocumentHead,
-    pub body: DocumentBody,
+    head: Head,
+    body: Box<str>,
+    text: Box<str>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DocumentHead {
-    pub name: Arc<str>,
+#[derive(Debug, Deserialize)]
+struct Head {
+    name: Box<str>,
     #[serde(default)]
-    pub(crate) deps: Option<Arc<[Dependency]>>,
-}
-
-#[derive(Debug, Serialize)]
-pub enum DocumentBody {
-    Md(Box<str>),
+    deps: Option<Box<[Box<str>]>>,
 }
 
 impl Document {
-    pub fn new(path: &NodePath, text: &str) -> Result<Self> {
+    pub(crate) fn new(path: &NodePath, text: &str) -> Result<Self> {
         let matter = gray_matter::Matter::<gray_matter::engine::YAML>::new();
         let matter = matter
-            .parse_with_struct::<DocumentHead>(text)
-            .context("no front matter")?;
+            .parse_with_struct::<Head>(text)
+            .context("no frontmatter")?;
 
         let head = matter.data;
-        let body = DocumentBody::Md(matter.content.into());
+        let body = matter.content.into();
+        let text = matter.orig.into();
 
         tracing::debug!(name = %head.name, %path, "document");
-        Ok(Self { head, body })
-    }
-}
-
-impl NodeDataTrait for Document {
-    fn name(&self) -> Arc<str> {
-        self.head.name.clone()
+        Ok(Self { head, body, text })
     }
 
-    fn deps(&self) -> Option<Arc<[Dependency]>> {
-        self.head.deps.clone()
+    pub fn name(&self) -> &str {
+        &self.head.name
+    }
+
+    pub(crate) fn deps(&self) -> Option<&[Box<str>]> {
+        self.head.deps.as_deref()
+    }
+
+    pub fn body(&self) -> &str {
+        &self.body
+    }
+
+    pub fn text(&self) -> &str {
+        &self.text
     }
 }
