@@ -10,7 +10,7 @@ pub async fn get(grimoire: Grimoire) -> ServeResult<Response> {
         nodes: Vec<NodeHead>,
     }
 
-    let nodes = grimoire.iter().await?;
+    let nodes = grimoire.all().await?;
     let template = IndexHtml { nodes };
 
     Ok(template.into_response())

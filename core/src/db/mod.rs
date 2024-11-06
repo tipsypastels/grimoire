@@ -41,7 +41,7 @@ impl Db {
     }
 
     pub fn get_nodes(&self) -> BoxStream<Result<DbNode>> {
-        query_as(r#"SELECT * FROM nodes"#).fetch(&self.pool)
+        query_as(r#"SELECT * FROM nodes ORDER BY name ASC"#).fetch(&self.pool)
     }
 
     pub async fn insert_node(&self, node: DbNewNode<'_>) -> Result<i64> {

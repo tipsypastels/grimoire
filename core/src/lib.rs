@@ -34,7 +34,7 @@ impl Grimoire {
         Ok(Some(Node::revive(&self.root, node)?))
     }
 
-    pub async fn iter(&self) -> Result<Vec<NodeHead>> {
+    pub async fn all(&self) -> Result<Vec<NodeHead>> {
         self.db
             .get_nodes()
             .map_err(Error::from)
