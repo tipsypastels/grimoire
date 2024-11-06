@@ -1,10 +1,10 @@
 use crate::db::DbNode;
+use anyhow::Result;
+use camino::Utf8Path;
 
 mod kind;
 mod path;
 
-use anyhow::Result;
-use camino::Utf8Path;
 pub use kind::*;
 pub use path::*;
 
