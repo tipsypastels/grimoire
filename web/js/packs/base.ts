@@ -1,7 +1,8 @@
 declare global {
-  var Stimulus: import("@hotwired/stimulus").Application;
+  var Stimulus: Application;
 }
 
+import "@hotwired/turbo";
 import { Application } from "@hotwired/stimulus";
 import { TestController } from "../controllers/test";
 
