@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ node.name() }}{% endblock %}
+
+{% block content %}
+  <div class="prose">
+    <h1>{{ node.name() }}</h1>
+  </div>
+{% endblock %}

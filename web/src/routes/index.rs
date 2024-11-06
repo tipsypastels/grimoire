@@ -1,7 +1,4 @@
-use crate::render::{fa, ServeResult};
-use askama_axum::Template;
-use axum::response::{IntoResponse, Response};
-use grimoire_core::{Grimoire, NodeHead};
+use super::prelude::*;
 
 pub async fn get(grimoire: Grimoire) -> ServeResult<Response> {
     #[derive(Template)]

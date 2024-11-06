@@ -6,7 +6,7 @@
   <ul>
     {% for node in nodes %}
       <li>
-        <a href="/{{ node.path().rel() }}">{{ node.name() }}</a>
+        <a href="/node/{{ node.path().rel() }}">{{ node.name() }}</a>
       </li>
     {% endfor %}
   </ul>

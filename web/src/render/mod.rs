@@ -1,6 +1,6 @@
 mod error;
 
-pub use error::{ServeError, ServeResult};
+pub use error::{OrNotFound, ServeError, ServeResult};
 
 macro_rules! fa {
     ($name:expr) => {
