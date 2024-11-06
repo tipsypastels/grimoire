@@ -1,12 +1,16 @@
 {
   "name": "grimoire",
   "version": "1.0.0",
+  "scripts": {
+    "tools:iconfix": "node tools/iconfix.mjs"
+  },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.9",
     "@tailwindcss/typography": "^0.5.15",
+    "fast-xml-parser": "^4.5.0",
     "prettier": "^3.3.3",
     "prettier-plugin-jinja-template": "^2.0.0",
     "prettier-plugin-tailwindcss": "^0.6.8",

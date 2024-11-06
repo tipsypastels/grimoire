@@ -6,6 +6,7 @@ use tokio::net::TcpListener;
 
 mod app;
 mod grimoire;
+mod render;
 mod routes;
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
