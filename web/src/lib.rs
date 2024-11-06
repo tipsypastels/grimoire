@@ -1,4 +1,4 @@
-use self::app::App;
+use self::{app::App, grimoire::GrimoireLock};
 use anyhow::Result;
 use grimoire_core::Grimoire;
 use std::net::SocketAddr;
@@ -10,6 +10,7 @@ mod render;
 mod routes;
 
 pub async fn serve(grimoire: Grimoire, port: u16) -> Result<()> {
+    let grimoire = GrimoireLock::new(grimoire);
     let app = App::new(grimoire);
     let router = routes::router(app);
 

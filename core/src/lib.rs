@@ -46,6 +46,10 @@ impl Grimoire {
         Some(Dependencies(deps.collect()))
     }
 
+    pub fn nodes(&self) -> Nodes<'_> {
+        Nodes(self.arena.iter())
+    }
+
     pub fn insert(&mut self, node: Node) {
         let path = node.path.rel.clone();
         let id = self.arena.alloc(node);
@@ -72,5 +76,16 @@ impl Grimoire {
                 .with_context(|| format!("failed to hydrate {}", node.path))?;
         }
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct Nodes<'a>(id_arena::Iter<'a, Node, id_arena::DefaultArenaBehavior<Node>>);
+
+impl<'a> Iterator for Nodes<'a> {
+    type Item = &'a Node;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(_id, node)| node)
     }
 }

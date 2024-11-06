@@ -61,6 +61,11 @@ impl Node {
         Ok(())
     }
 
+    // FIXME: This is a truly terrible return type.
+    pub fn name(&self) -> Arc<Arc<str>> {
+        self.name.load().clone()
+    }
+
     pub async fn read(&self) -> Result<NodeContent> {
         let text = util::read_to_string(&self.path.abs).await?;
         let data = self.kind.create(&self.path, &text)?;
