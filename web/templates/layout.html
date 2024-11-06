@@ -22,11 +22,12 @@
     <title>{% block title %}{% endblock %}</title>
   </head>
   <body>
-    <div class="grid min-h-[100vh] grid-cols-12 gap-4">
-      <aside class="col-span-3 p-4">
-        {% block aside %}
-          Sidebar
-        {% endblock %}
+    <div class="grid min-h-[100vh] grid-cols-12">
+      <aside class="col-span-3 flex flex-col p-4">
+        <div class="flex-grow border-2 border-solid border-slate-800 p-8">
+          {% block aside %}
+          {% endblock %}
+        </div>
       </aside>
 
       <main class="col-span-9 p-4">

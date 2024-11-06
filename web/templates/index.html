@@ -2,15 +2,19 @@
 
 {% block title %}Index{% endblock %}
 
+{% block aside %}
+  <ul>
+    {% for node in nodes %}
+      <li>
+        <a href="/{{ node.path().rel() }}">{{ node.name() }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+
 {% block content %}
   <div class="prose">
     <h1>Hello, world!</h1>
     {{ fa!("heart") }}
-
-    <ul>
-      {% for node in nodes %}
-        <li>{{ node.name() }}</li>
-      {% endfor %}
-    </ul>
   </div>
 {% endblock %}
