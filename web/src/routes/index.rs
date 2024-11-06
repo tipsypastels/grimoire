@@ -1,7 +1,7 @@
 use super::prelude::*;
 
 #[derive(Template)]
-#[template(path = "index.html", escape = "none")]
+#[template(path = "index.html")]
 pub struct IndexTemplate {
     globals: Globals,
 }

@@ -1,0 +1,31 @@
+{% extends "layout/skeleton.html" %}
+
+{# Don't render static head content in a frame as Turbo will already include it. #}
+{% block static_head %}
+  {% if !globals.is_turbo_frame %}
+    {% call super() %}
+  {% endif %}
+{% endblock %}
+
+{% block body %}
+  <div class="grid min-h-[100vh] grid-cols-12">
+    <aside class="col-span-3 flex flex-col p-4">
+      <div class="flex-grow border-2 border-solid border-slate-800 p-8">
+        <ul>
+          {% for node in globals.nodes %}
+            <li>
+              <a href="/node/{{ node.path().rel() }}">{{ node.name() }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+
+    <main class="col-span-9 p-4">
+      <div class="h-full border-2 border-solid border-slate-800 p-8">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </main>
+  </div>
+{% endblock %}
