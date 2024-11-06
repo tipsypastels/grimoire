@@ -1,6 +1,8 @@
 mod error;
+mod globals;
 
 pub use error::{OrNotFound, ServeError, ServeResult};
+pub use globals::Globals;
 
 macro_rules! fa {
     ($name:expr) => {

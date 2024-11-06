@@ -1,14 +1,11 @@
 use super::prelude::*;
 
-pub async fn get(grimoire: Grimoire) -> ServeResult<Response> {
-    #[derive(Template)]
-    #[template(path = "index.html", escape = "none")]
-    pub struct IndexHtml {
-        nodes: Vec<NodeHead>,
-    }
+#[derive(Template)]
+#[template(path = "index.html", escape = "none")]
+pub struct IndexTemplate {
+    globals: Globals,
+}
 
-    let nodes = grimoire.all().await?;
-    let template = IndexHtml { nodes };
-
-    Ok(template.into_response())
+pub async fn get(globals: Globals) -> ServeResult<IndexTemplate> {
+    Ok(IndexTemplate { globals })
 }

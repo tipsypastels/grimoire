@@ -5,12 +5,19 @@ use camino::Utf8PathBuf;
 #[derive(Template)]
 #[template(path = "page.html")]
 pub struct PageTemplate {
+    globals: Globals,
     node: Node,
 }
 
-pub async fn get(grimoire: Grimoire, Path(path): Path<Utf8PathBuf>) -> ServeResult<PageTemplate> {
+pub async fn get(
+    grimoire: Grimoire,
+    globals: Globals,
+    Path(path): Path<Utf8PathBuf>,
+) -> ServeResult<PageTemplate> {
     let node = grimoire.get(&path).await?;
     let node = node.or_not_found()?;
+    let t = PageTemplate { globals, node };
+    dbg!(t.to_string());
 
-    Ok(PageTemplate { node })
+    Ok(t)
 }
