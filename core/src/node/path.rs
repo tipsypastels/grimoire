@@ -28,6 +28,16 @@ impl NodePath {
         Self { rel, abs }
     }
 
+    pub(crate) fn dependency(&self, root: &Utf8Path, dep: &str) -> Result<Self> {
+        let parent = self.abs.parent().expect("path should have parent");
+        let abs = parent
+            .join(dep)
+            .canonicalize_utf8()
+            .with_context(|| format!("can't canonicalize dep {dep} from {self}"))?;
+
+        Self::new(root, abs.into())
+    }
+
     pub fn rel(&self) -> &NodePathRel {
         &self.rel
     }

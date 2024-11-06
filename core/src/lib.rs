@@ -5,6 +5,7 @@ use futures::{StreamExt, TryStreamExt};
 use std::sync::Arc;
 
 mod db;
+mod dependency;
 mod document;
 mod node;
 mod util;
@@ -46,7 +47,7 @@ impl Grimoire {
         &self,
         path: impl Into<Box<Utf8Path>>,
         text: &str,
-    ) -> Result<Option<(NodePath, NodeData)>> {
+    ) -> Result<Option<(i64, NodePath, NodeData)>> {
         let path = NodePath::new(&self.root, path.into())?;
         let Some(kind) = NodeKind::determine(path.abs().extension()) else {
             return Ok(None);
@@ -58,19 +59,21 @@ impl Grimoire {
         };
 
         tracing::info!(name = %data.name(), %path, "node");
-        self.db.insert_node(node.into()).await?;
-        Ok(Some((path, data)))
+        let id = self.db.insert_node(node.into()).await?;
+        Ok(Some((id, path, data)))
     }
 
-    // TODO: Dependencies.
     pub async fn populate(&self) -> Result<()> {
         let mut stream = util::walk_dir_and_read(&self.root).await;
+        let mut collector = dependency::Collector::new(&self.root, &self.db);
         while let Some(result) = stream.next().await {
             let (path, text) = result?;
-            let Some((_path, _data)) = self.insert(path, &text).await? else {
+            let Some((id, path, data)) = self.insert(path, &text).await? else {
                 continue;
             };
+            collector.collect(id, path, data);
         }
+        collector.populate().await?;
         Ok(())
     }
 }

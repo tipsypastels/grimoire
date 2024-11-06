@@ -18,9 +18,9 @@ CREATE TABLE node_tags (
 
 CREATE INDEX node_tags_idx_tag ON node_tags (tag);
 
-CREATE TABLE node_references (
+CREATE TABLE node_dependencies (
   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  referrer_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE CASCADE,
-  referrent_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE CASCADE,
-  UNIQUE (referrer_id, referrent_id)
+  from_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE CASCADE,
+  to_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE CASCADE,
+  UNIQUE (from_id, to_id)
 );

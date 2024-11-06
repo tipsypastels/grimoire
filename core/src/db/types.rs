@@ -51,8 +51,8 @@ pub struct DbNodeTag {
 }
 
 #[derive(FromRow)]
-pub struct DbNodeReference {
+pub struct DbNodeDependency {
     pub id: i64,
-    pub referrer_id: i64,
-    pub referrent_id: i64,
+    pub from_id: i64,
+    pub to_id: i64,
 }

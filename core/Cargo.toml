@@ -8,6 +8,7 @@ anyhow.workspace = true
 camino.workspace = true
 futures.workspace = true
 gray_matter = "0.2.8"
+rustc-hash = "2.0.0"
 serde.workspace = true
 sqlx = { version = "0.8.2", features = [
   "runtime-tokio",

@@ -24,7 +24,7 @@ impl Db {
         Ok(Self { pool })
     }
 
-    pub async fn get_node(&self, id: i32) -> Result<Option<DbNode>> {
+    pub async fn get_node(&self, id: i64) -> Result<Option<DbNode>> {
         let node = query_as(r#"SELECT * FROM nodes WHERE id = ?1"#)
             .bind(id)
             .fetch_optional(&self.pool)
@@ -55,13 +55,12 @@ impl Db {
         Ok(res.last_insert_rowid())
     }
 
-    pub async fn insert_node_reference(&self, referrer: i32, referrent: i32) -> Result<i64> {
-        let res =
-            query(r#"INSERT INTO node_references (referrer_id, referrent_id) VALUES (?1, ?2)"#)
-                .bind(referrer)
-                .bind(referrent)
-                .execute(&self.pool)
-                .await?;
+    pub async fn insert_node_dependency(&self, from: i64, to: i64) -> Result<i64> {
+        let res = query(r#"INSERT INTO node_dependencies (from_id, to_id) VALUES (?1, ?2)"#)
+            .bind(from)
+            .bind(to)
+            .execute(&self.pool)
+            .await?;
         Ok(res.last_insert_rowid())
     }
 }
