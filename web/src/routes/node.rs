@@ -17,8 +17,8 @@ pub async fn get(
 ) -> ServeResult<NodeTemplate> {
     let node = grimoire.get(&path).await?;
     let node = node.or_not_found()?;
-    let markdown = grimoire_core::markdown(match node.data() {
-        grimoire_core::NodeData::Document(document) => document.body(),
+    let markdown = grimoire_core::markdown::markdown(match node.data() {
+        grimoire_core::node::NodeData::Document(document) => document.body(),
     })?;
 
     Ok(NodeTemplate {

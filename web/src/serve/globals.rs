@@ -1,7 +1,7 @@
 use super::{ServeError, ServeResult};
 use crate::app::App;
 use axum::{extract::FromRequestParts, http::request::Parts};
-use grimoire_core::NodeHead;
+use grimoire_core::node::NodeHead;
 
 #[derive(Debug)]
 #[allow(clippy::manual_non_exhaustive)]

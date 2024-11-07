@@ -1,4 +1,4 @@
-use self::db::Db;
+use self::{db::Db, node::*};
 use anyhow::{Error, Result};
 use camino::Utf8Path;
 use futures::{StreamExt, TryStreamExt};
@@ -6,14 +6,10 @@ use std::sync::Arc;
 
 mod db;
 mod dependency;
-mod document;
-mod markdown;
-mod node;
+pub mod document;
+pub mod markdown;
+pub mod node;
 mod util;
-
-pub use document::*;
-pub use markdown::*;
-pub use node::*;
 
 #[derive(Debug, Clone)]
 pub struct Grimoire {
