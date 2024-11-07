@@ -7,9 +7,12 @@ use std::sync::Arc;
 mod db;
 mod dependency;
 mod document;
+mod markdown;
 mod node;
 mod util;
 
+pub use document::*;
+pub use markdown::*;
 pub use node::*;
 
 #[derive(Debug, Clone)]

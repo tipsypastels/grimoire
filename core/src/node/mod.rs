@@ -28,6 +28,10 @@ impl Node {
         self.data.kind()
     }
 
+    pub fn data(&self) -> &NodeData {
+        &self.data
+    }
+
     pub(crate) fn revive(root: &Utf8Path, node: DbNode) -> Result<Self> {
         let path = NodePath::revive(root, node.path);
         let kind = node.kind.parse::<NodeKind>()?;

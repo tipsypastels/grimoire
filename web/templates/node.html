@@ -5,5 +5,7 @@
 {% block content %}
   <div class="prose">
     <h1>{{ node.name() }}</h1>
+
+    {{ markdown|safe }}
   </div>
 {% endblock %}

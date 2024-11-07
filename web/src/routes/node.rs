@@ -7,6 +7,7 @@ use camino::Utf8PathBuf;
 pub struct NodeTemplate {
     globals: Globals,
     node: Node,
+    markdown: String,
 }
 
 pub async fn get(
@@ -16,6 +17,13 @@ pub async fn get(
 ) -> ServeResult<NodeTemplate> {
     let node = grimoire.get(&path).await?;
     let node = node.or_not_found()?;
+    let markdown = grimoire_core::markdown(match node.data() {
+        grimoire_core::NodeData::Document(document) => document.body(),
+    })?;
 
-    Ok(NodeTemplate { globals, node })
+    Ok(NodeTemplate {
+        globals,
+        node,
+        markdown,
+    })
 }
