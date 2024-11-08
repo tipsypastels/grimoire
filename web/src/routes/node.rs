@@ -1,13 +1,14 @@
 use super::prelude::*;
 use axum::extract::Path;
 use camino::Utf8PathBuf;
+use grimoire_core::markdown::Markdown;
 
 #[derive(Template)]
 #[template(path = "node.html")]
 pub struct NodeTemplate {
     globals: Globals,
     node: Node,
-    markdown: String,
+    markdown: Markdown,
 }
 
 pub async fn get(
@@ -17,9 +18,9 @@ pub async fn get(
 ) -> ServeResult<NodeTemplate> {
     let node = grimoire.get(&path).await?;
     let node = node.or_not_found()?;
-    let markdown = grimoire_core::markdown::markdown(match node.data() {
-        grimoire_core::node::NodeData::Document(document) => document.body(),
-    })?;
+    let markdown = match node.data() {
+        grimoire_core::node::NodeData::Document(document) => document.markdown::<()>(),
+    }?;
 
     Ok(NodeTemplate {
         globals,

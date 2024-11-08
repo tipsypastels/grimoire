@@ -6,6 +6,6 @@
   <div class="prose">
     <h1>{{ node.name() }}</h1>
 
-    {{ markdown|safe }}
+    {{ markdown.html()|safe }}
   </div>
 {% endblock %}

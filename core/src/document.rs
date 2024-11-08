@@ -1,4 +1,4 @@
-use crate::node::NodePath;
+use crate::{markdown, node::NodePath};
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
@@ -45,5 +45,9 @@ impl Document {
 
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    pub fn markdown<H: markdown::Hooks>(&self) -> Result<markdown::Markdown> {
+        markdown::Markdown::new::<H>(&self.body)
     }
 }

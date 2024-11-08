@@ -6,11 +6,13 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 camino.workspace = true
+comrak = "0.29.0"
 futures.workspace = true
 gray_matter = "0.2.8"
-pulldown-cmark = "0.12.2"
+id-arena = "2.2.1"
 rustc-hash = "2.0.0"
 serde.workspace = true
+slug = "0.1.6"
 sqlx = { version = "0.8.2", features = [
   "runtime-tokio",
   "tls-rustls",
